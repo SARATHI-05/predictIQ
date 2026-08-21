@@ -1,7 +1,7 @@
 import os
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
 from datetime import date, timedelta
 from app.database.database import get_db
 from app.models.food_record import FoodRecord
@@ -17,9 +17,26 @@ from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
-@router.get("/summary")
-def get_dashboard_summary(db: Session = Depends(get_db)):
+@router.get("")
+@router.get("/overview")
+def get_dashboard_overview(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Combined Dashboard Feed endpoint for mobile and web clients
+    """
+    summary_data = get_dashboard_summary(db=db, current_user=current_user)
+    trends_data = get_dashboard_trends(db=db, current_user=current_user)
+    activities_data = get_recent_activities(db=db, current_user=current_user)
+    return {
+        "status": "success",
+        "summary": summary_data,
+        "trends": trends_data,
+        "recent_activities": activities_data,
+        **summary_data
+    }
 
+@router.get("/summary")
+
+def get_dashboard_summary(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Feature 16: Enhanced KPI summary cards with:
     - Today's demand and prep numbers
@@ -37,15 +54,11 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
 
     # Query records on the latest date
     day_records = db.query(FoodRecord).filter(FoodRecord.date == target_date).all()
-    if not day_records:
-        day_records = db.query(FoodRecord).order_by(FoodRecord.date.desc()).limit(5).all()
-
     today_prep = sum(r.food_prepared for r in day_records) if day_records else 0
     today_cons = sum(r.food_consumed for r in day_records) if day_records else 0
     today_left = sum(r.leftover for r in day_records) if day_records else 0
     today_cust = sum(r.expected_customers for r in day_records) if day_records else 0
     waste_pct = round((today_left / max(1, today_prep)) * 100, 1) if today_prep > 0 else 0.0
-
 
     # Query latest prediction
     latest_pred = db.query(Prediction).order_by(Prediction.prediction_date.desc(), Prediction.id.desc()).first()
@@ -95,9 +108,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     # System Health check
     db_connected = True
     try:
-        db.execute(func.now())
+        db.execute(text("SELECT 1"))
     except Exception:
         db_connected = False
+
 
     ml_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml"))
     model_file_exists = os.path.exists(os.path.join(ml_dir, "model.pkl")) or os.path.exists(os.path.join(ml_dir, "dataset.csv"))
@@ -135,10 +149,10 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     }
 
 @router.get("/trends")
-def get_dashboard_trends(db: Session = Depends(get_db)):
+def get_dashboard_trends(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Fetch structured time-series and category aggregation data for dashboard charts"""
     records = db.query(FoodRecord).order_by(FoodRecord.date.asc()).all()
-
+    
     # 1. Actual vs Predicted Demand / Demand Trend (Group by date)
     date_groups = {}
     for r in records:
@@ -191,8 +205,7 @@ def get_dashboard_trends(db: Session = Depends(get_db)):
     }
 
 @router.get("/recent-activities")
-def get_recent_activities(db: Session = Depends(get_db)):
-
+def get_recent_activities(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Fetch latest activities across uploads, predictions, food records, and active alerts"""
     latest_uploads = db.query(DatasetLog).order_by(DatasetLog.id.desc()).limit(3).all()
     latest_predictions = db.query(Prediction).order_by(Prediction.id.desc()).limit(4).all()

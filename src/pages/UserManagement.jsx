@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Users, Shield, UserPlus, RefreshCw, Search, CheckCircle, XCircle, Activity, Lock, Trash2, AlertTriangle, ShieldAlert } from 'lucide-react';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/Modal';
@@ -28,8 +28,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`http://127.0.0.1:8000/api/users?search=${search}&role=${roleFilter}`, { headers });
+      const res = await api.get(`/api/users?search=${search}&role=${roleFilter}`);
       setUsers(res.data);
     } catch (err) {
       toast.error('Failed to load user accounts');
@@ -49,8 +48,7 @@ const UserManagement = () => {
     }
     const newStatus = !currentStatus;
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.put(`http://127.0.0.1:8000/api/users/${userId}/status`, { is_active: newStatus }, { headers });
+      await api.put(`/api/users/${userId}/status`, { is_active: newStatus });
       toast.success(`User ${email} ${newStatus ? 'activated' : 'deactivated'}`);
       fetchUsers();
     } catch (err) {
@@ -60,8 +58,7 @@ const UserManagement = () => {
 
   const handleRoleChange = async (userId, newRole, email) => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.put(`http://127.0.0.1:8000/api/users/${userId}/role`, { role: newRole }, { headers });
+      await api.put(`/api/users/${userId}/role`, { role: newRole });
       toast.success(`Changed ${email} role to ${newRole}`);
       fetchUsers();
     } catch (err) {
@@ -73,8 +70,7 @@ const UserManagement = () => {
     setSelectedUser(u);
     setLoadingActivity(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`http://127.0.0.1:8000/api/users/${u.id}/activity`, { headers });
+      const res = await api.get(`/api/users/${u.id}/activity`);
       setActivityData(res.data);
     } catch (err) {
       toast.error('Failed to load user activity trail');
@@ -95,8 +91,7 @@ const UserManagement = () => {
     if (!userToDelete) return;
     setDeleting(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.delete(`http://127.0.0.1:8000/api/users/${userToDelete.id}`, { headers });
+      const res = await api.delete(`/api/users/${userToDelete.id}`);
       toast.success(res.data?.message || `User ${userToDelete.email} removed successfully`);
       setUserToDelete(null);
       fetchUsers();
@@ -106,6 +101,7 @@ const UserManagement = () => {
       setDeleting(false);
     }
   };
+
 
   return (
     <div className="page-wrapper">

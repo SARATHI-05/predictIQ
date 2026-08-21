@@ -1,62 +1,78 @@
 import axios from 'axios';
+import { auth } from '../firebase';
 
-const getApiBaseUrl = () => {
-  // 1. Explicit environment variable set in Vercel / Render / .env
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-
-  const hostname = window.location.hostname;
-
-  // 2. Production Vercel / Netlify CDN deployments
-  if (hostname.includes('vercel.app') || hostname.includes('netlify.app') || hostname.includes('render.com')) {
-    return 'https://predictiq-backend.onrender.com';
-  }
-
-  // 3. Local Wi-Fi network testing from mobile phone (e.g. 192.168.x.x)
-  if (
-    hostname.startsWith('192.168.') ||
-    hostname.startsWith('10.') ||
-    hostname.startsWith('172.')
-  ) {
-    return `http://${hostname}:8000`;
-  }
-
-  // 4. Default local development fallback
-  return 'http://127.0.0.1:8000';
-};
+// Ensure baseURL handles VITE_API_URL correctly in production
+const rawApiUrl = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = rawApiUrl.replace(/\/+$/, '');
 
 const api = axios.create({
-  baseURL: getApiBaseUrl(),
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000,
 });
 
-// Attach JWT token to requests if present
+// Request Interceptor: Attach fresh Firebase ID Token or standard JWT
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('predictiq_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    try {
+      if (auth && auth.currentUser) {
+        // Obtain current Firebase user ID token dynamically without storing it in localStorage
+        const fbToken = await auth.currentUser.getIdToken();
+        if (fbToken) {
+          config.headers.Authorization = `Bearer ${fbToken}`;
+          return config;
+        }
+      }
+    } catch (tokenErr) {
+      console.warn('[API Auth] Failed to retrieve dynamic Firebase ID token:', tokenErr);
     }
+
+    // Fallback to local session token if available
+    const localToken = localStorage.getItem('predictiq_token');
+    if (localToken && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${localToken}`;
+    }
+
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('[API Request Setup Error]:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Global response error handler
+// Response Interceptor: Token Refresh Retry & Structured Error Logging
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      // Clear token if unauthorized on protected endpoints
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-        localStorage.removeItem('predictiq_token');
-        localStorage.removeItem('predictiq_user');
-        window.location.href = '/login';
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Error Diagnosis & Logging
+    if (error.response) {
+      const { status, data } = error.response;
+      console.warn(`[API ${status} Error] [${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}]:`, data?.detail || data?.message || data);
+
+      // Handle 401 Unauthorized with automatic token refresh and single retry
+      if (status === 401 && !originalRequest._retry && auth?.currentUser) {
+        originalRequest._retry = true;
+        try {
+          console.info('[API Auth] 401 received. Refreshing Firebase ID token with getIdToken(true)...');
+          const refreshedToken = await auth.currentUser.getIdToken(true);
+          originalRequest.headers.Authorization = `Bearer ${refreshedToken}`;
+          return api(originalRequest);
+        } catch (refreshErr) {
+          console.error('[API Auth] Token refresh failed:', refreshErr);
+        }
       }
+    } else if (error.request) {
+      // Network Error / CORS Error / Server Down
+      console.error(`[API Network/CORS Error] Cannot reach backend API at "${API_BASE_URL}". Please verify VITE_API_URL and backend CORS configuration.`, error);
+    } else {
+      console.error('[API Setup Error]:', error.message);
     }
+
     return Promise.reject(error);
   }
 );

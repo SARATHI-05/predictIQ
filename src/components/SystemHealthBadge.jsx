@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, CheckCircle, AlertCircle, Database, Cpu, Server } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { formatISTTime } from '../utils/timeUtils';
 
 
@@ -16,8 +16,9 @@ const SystemHealthBadge = () => {
 
   const checkHealth = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/health');
+      const res = await api.get('/api/health');
       setHealth(res.data);
+
       setLastCheck(new Date());
     } catch {
       setHealth({

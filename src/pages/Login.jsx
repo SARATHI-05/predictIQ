@@ -32,54 +32,24 @@ const Login = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      width: '100%',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
-      padding: '1rem',
-      position: 'relative',
-      boxSizing: 'border-box'
+      padding: '1.5rem',
+      position: 'relative'
     }}>
-      {/* Mobile Responsive Container */}
-      <div className="glass-card animate-fade-in login-card-responsive" style={{
+      <div className="glass-card animate-fade-in" style={{
         width: '100%',
         maxWidth: '440px',
+        padding: '2.5rem',
         borderRadius: '1.25rem',
         border: '1px solid rgba(255, 255, 255, 0.12)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
-        boxSizing: 'border-box'
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
-        {/* CSS for Mobile Responsiveness */}
-        <style>{`
-          .login-card-responsive {
-            padding: 2.25rem;
-          }
-          .login-title-responsive {
-            font-size: 1.85rem;
-          }
-          .login-input-responsive {
-            font-size: 16px !important;
-            height: 48px !important;
-          }
-          @media (max-width: 480px) {
-            .login-card-responsive {
-              padding: 1.5rem 1.15rem !important;
-              border-radius: 1rem !important;
-            }
-            .login-title-responsive {
-              font-size: 1.5rem !important;
-            }
-            .login-logo-box {
-              width: 48px !important;
-              height: 48px !important;
-            }
-          }
-        `}</style>
-
         {/* Logo Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <div className="login-logo-box" style={{
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          <div style={{
             width: '56px',
             height: '56px',
             borderRadius: '16px',
@@ -88,15 +58,14 @@ const Login = () => {
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: 'var(--shadow-glow)',
-            marginBottom: '0.75rem',
-            transition: 'all 0.2s ease'
+            marginBottom: '0.85rem'
           }}>
-            <Sparkles size={28} color="#FFFFFF" />
+            <Sparkles size={32} color="#FFFFFF" />
           </div>
-          <h1 className="login-title-responsive" style={{ fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>
+          <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
             Predict<span style={{ color: 'var(--accent-primary)' }}>IQ</span>
           </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem', lineHeight: 1.4 }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
             AI-Based Food Demand & Resource Planning
           </p>
         </div>
@@ -140,20 +109,20 @@ const Login = () => {
           letterSpacing: '0.05em'
         }}>
           <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-          <span>Or sign in with Email</span>
+          <span>Or sign in with Gmail / Password</span>
           <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
         </div>
 
-        {/* Email & Password Form */}
+        {/* Gmail & Password Form */}
         <form onSubmit={handleEmailSubmit} autoComplete="off">
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Gmail / Email Address</label>
+          <div className="form-group">
+            <label className="form-label">Gmail / Email Address</label>
             <div style={{ position: 'relative' }}>
               <input
                 type="email"
                 required
                 autoComplete="off"
-                className="form-control login-input-responsive"
+                className="form-control"
                 placeholder="yourname@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -163,9 +132,9 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '4px' }}>
-              <label className="form-label" style={{ marginBottom: 0, fontSize: '0.85rem' }}>Password</label>
+          <div className="form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
               <Link
                 to="/forgot-password"
                 style={{
@@ -183,7 +152,7 @@ const Login = () => {
                 type={showPassword ? 'text' : 'password'}
                 required
                 autoComplete="new-password"
-                className="form-control login-input-responsive"
+                className="form-control"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -203,9 +172,8 @@ const Login = () => {
                   border: 'none',
                   color: 'var(--text-muted)',
                   cursor: 'pointer',
-                  padding: '4px'
+                  padding: 0
                 }}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -216,15 +184,15 @@ const Login = () => {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', minHeight: '48px', padding: '0.85rem', marginTop: '0.25rem', fontSize: '0.925rem', fontWeight: 600 }}
+            style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
           >
             {loading ? 'Authenticating...' : 'Sign In'}
-            {!loading && <ArrowRight size={16} style={{ marginLeft: '4px' }} />}
+            {!loading && <ArrowRight size={16} />}
           </button>
         </form>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.75rem', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
           Don't have an account?{' '}
           <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}>
             Register here

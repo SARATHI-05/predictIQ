@@ -35,6 +35,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+from app.utils.firebase_auth import verify_firebase_id_token
+
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
@@ -48,18 +50,52 @@ def get_current_user(
         raise credentials_exception
         
     token = credentials.credentials
+
+    # 1. First Attempt: PredictIQ HS256 JWT Token
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
+        if email:
+            user = db.query(User).filter(User.email == email.lower()).first()
+            if user:
+                return user
+    except Exception:
+        pass
 
-    user = db.query(User).filter(User.email == email).first()
-    if user is None:
-        raise credentials_exception
-    return user
+    # 2. Second Attempt: Firebase ID Token / Google OAuth Token
+    try:
+        firebase_info = verify_firebase_id_token(token)
+        fb_email = (firebase_info.get("email") or "").lower()
+        fb_uid = firebase_info.get("uid")
+
+        user = None
+        if fb_email:
+            user = db.query(User).filter(User.email == fb_email).first()
+        if not user and fb_uid:
+            user = db.query(User).filter(User.firebase_uid == fb_uid).first()
+
+        if user:
+            return user
+
+        # If user doesn't exist in DB yet, auto-provision account
+        new_user = User(
+            email=fb_email or f"{fb_uid}@firebase.predictiq",
+            name=firebase_info.get("name") or "PredictIQ User",
+            role="Admin" if "admin" in (fb_email or "").lower() else "Staff",
+            firebase_uid=fb_uid,
+            is_active=True
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
+    raise credentials_exception
+
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != "Admin":

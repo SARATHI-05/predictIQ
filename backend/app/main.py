@@ -39,10 +39,14 @@ from app.api import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup: Run database initialization and model loading
     print("Starting PredictIQ Backend...")
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Warning: Database initialization error: {e}")
     yield
     print("Shutting down PredictIQ Backend...")
-
 
 app = FastAPI(
     title="PredictIQ API",
@@ -54,21 +58,27 @@ app = FastAPI(
 )
 
 # Configure CORS
+allowed_origins_env = os.getenv("CORS_ORIGINS", "")
+custom_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+
 origins = [
+    "https://predict-iq-seven.vercel.app",
+    "https://q-seven.vercel.app",
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
-    "*"
-]
+] + custom_origins
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "Access-Control-Request-Headers", "Access-Control-Request-Method"],
 )
+
 
 # Register API Routers (Standard Routes)
 app.include_router(auth.router)
@@ -114,12 +124,20 @@ def root():
         "system": "PredictIQ",
         "status": "online",
         "description": "AI-Based Food Demand and Resource Planning System",
-        "version": "1.0.0",
         "docs_url": "/docs",
         "redoc_url": "/redoc"
     }
 
+@app.get("/health")
+def health_simple():
+    """
+    Standard lightweight health check endpoint returning {"status": "ok"}
+    """
+    return {"status": "ok"}
+
 @app.get("/api/health")
+
+
 def health_check(db: Session = Depends(get_db)):
     """
     Feature 17: Comprehensive System Health API

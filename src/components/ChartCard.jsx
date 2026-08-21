@@ -2,31 +2,28 @@ import React from 'react';
 
 const ChartCard = ({ title, subtitle, children, headerAction }) => {
   return (
-    <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+    <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        gap: '0.75rem',
-        marginBottom: '1rem',
+        marginBottom: '1.25rem',
         paddingBottom: '0.75rem',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-        flexWrap: 'wrap',
-        minWidth: 0
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
       }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, overflowWrap: 'break-word' }}>
+        <div>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             {title}
           </h3>
           {subtitle && (
-            <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '0.25rem', overflowWrap: 'break-word' }}>
+            <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
               {subtitle}
             </p>
           )}
         </div>
-        {headerAction && <div style={{ flexShrink: 0 }}>{headerAction}</div>}
+        {headerAction && <div>{headerAction}</div>}
       </div>
-      <div style={{ flex: 1, minHeight: '260px', width: '100%', minWidth: 0 }}>
+      <div style={{ flex: 1, minHeight: '280px', width: '100%' }}>
         {children}
       </div>
     </div>

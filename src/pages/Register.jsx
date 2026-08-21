@@ -32,53 +32,24 @@ const Register = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      width: '100%',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
-      padding: '1rem',
-      position: 'relative',
-      boxSizing: 'border-box'
+      padding: '1.5rem',
+      position: 'relative'
     }}>
-      <div className="glass-card animate-fade-in register-card-responsive" style={{
+      <div className="glass-card animate-fade-in" style={{
         width: '100%',
         maxWidth: '460px',
+        padding: '2.5rem',
         borderRadius: '1.25rem',
         border: '1px solid rgba(255, 255, 255, 0.12)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
-        boxSizing: 'border-box'
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
-        {/* CSS for Mobile Responsiveness */}
-        <style>{`
-          .register-card-responsive {
-            padding: 2.25rem;
-          }
-          .register-title-responsive {
-            font-size: 1.75rem;
-          }
-          .register-input-responsive {
-            font-size: 16px !important;
-            height: 48px !important;
-          }
-          @media (max-width: 480px) {
-            .register-card-responsive {
-              padding: 1.5rem 1.15rem !important;
-              border-radius: 1rem !important;
-            }
-            .register-title-responsive {
-              font-size: 1.45rem !important;
-            }
-            .register-logo-box {
-              width: 48px !important;
-              height: 48px !important;
-            }
-          }
-        `}</style>
-
         {/* Logo Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <div className="register-logo-box" style={{
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          <div style={{
             width: '54px',
             height: '54px',
             borderRadius: '14px',
@@ -87,14 +58,14 @@ const Register = () => {
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: 'var(--shadow-glow)',
-            marginBottom: '0.75rem'
+            marginBottom: '0.85rem'
           }}>
-            <Sparkles size={28} color="#FFFFFF" />
+            <Sparkles size={30} color="#FFFFFF" />
           </div>
-          <h1 className="register-title-responsive" style={{ fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Create Account
           </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem', lineHeight: 1.4 }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
             Join PredictIQ AI Food Resource Management
           </p>
         </div>
@@ -144,13 +115,13 @@ const Register = () => {
 
         {/* Standard Email Registration Form */}
         <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Full Name</label>
+          <div className="form-group">
+            <label className="form-label">Full Name</label>
             <div style={{ position: 'relative' }}>
               <input
                 type="text"
                 required
-                className="form-control register-input-responsive"
+                className="form-control"
                 placeholder="e.g. John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -160,13 +131,13 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Email Address</label>
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
             <div style={{ position: 'relative' }}>
               <input
                 type="email"
                 required
-                className="form-control register-input-responsive"
+                className="form-control"
                 placeholder="yourname@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -177,13 +148,13 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Password</label>
+          <div className="form-group">
+            <label className="form-label">Password</label>
             <div style={{ position: 'relative' }}>
               <input
                 type="password"
                 required
-                className="form-control register-input-responsive"
+                className="form-control"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -193,14 +164,14 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}>Role Designation</label>
+          <div className="form-group">
+            <label className="form-label">Role Designation</label>
             <div style={{ position: 'relative' }}>
               <select
-                className="form-control register-input-responsive"
+                className="form-control"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                style={{ paddingLeft: '2.5rem', fontSize: '0.825rem' }}
+                style={{ paddingLeft: '2.5rem' }}
               >
                 <option value="Staff">Kitchen Staff (Food Records, Predictions, Reports)</option>
                 <option value="Admin">System Administrator (Full Management)</option>
@@ -213,10 +184,10 @@ const Register = () => {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', minHeight: '48px', padding: '0.85rem', marginTop: '0.25rem', fontSize: '0.925rem', fontWeight: 600 }}
+            style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
           >
             {loading ? 'Creating Account...' : 'Complete Registration'}
-            {!loading && <ArrowRight size={16} style={{ marginLeft: '4px' }} />}
+            {!loading && <ArrowRight size={16} />}
           </button>
         </form>
 

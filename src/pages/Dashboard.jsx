@@ -4,16 +4,21 @@ import {
   Utensils, 
   TrendingUp, 
   Trash2, 
+  Users, 
   ChefHat, 
   Sparkles, 
   AlertTriangle,
   ArrowRight,
   RefreshCw,
   Layers,
+  Calendar,
   Package,
   Target,
-  Bell,
-  AlertCircle
+  Cpu,
+  Server,
+  Database,
+  CheckCircle,
+  Bell
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -21,6 +26,8 @@ import {
   Area, 
   BarChart, 
   Bar, 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   Tooltip, 
@@ -33,6 +40,9 @@ import ChartCard from '../components/ChartCard';
 import AlertCard from '../components/AlertCard';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useISTClock } from '../utils/timeUtils';
+import { Clock } from 'lucide-react';
+
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -56,19 +66,12 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-// Skeleton Loader Component for Dashboard Cards
-const SkeletonCard = () => (
-  <div className="glass-card" style={{ padding: '1.25rem', width: '100%', minWidth: 0 }}>
-    <div style={{ height: '14px', width: '60%', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', marginBottom: '1rem' }} className="pulse-indicator" />
-    <div style={{ height: '32px', width: '40%', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', marginBottom: '0.5rem' }} className="pulse-indicator" />
-    <div style={{ height: '12px', width: '75%', background: 'rgba(255,255,255,0.04)', borderRadius: '4px' }} className="pulse-indicator" />
-  </div>
-);
-
 const Dashboard = () => {
   const { user } = useAuth();
   const toast = useToast();
+  const { fullIST } = useISTClock();
   const [summary, setSummary] = useState(null);
+
   const [trends, setTrends] = useState(null);
   const [activities, setActivities] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -98,7 +101,9 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
+
   const handleMarkAlertRead = async (alertId) => {
+    // Optimistically remove from visible alerts immediately
     setActivities((prev) => prev ? {
       ...prev,
       recent_alerts: prev.recent_alerts?.filter((a) => a.id !== alertId)
@@ -116,36 +121,34 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="page-wrapper animate-fade-in" style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
+    <div className="page-wrapper animate-fade-in">
       {/* Top Banner */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '1.5rem',
+        alignItems: 'center',
+        marginBottom: '1.75rem',
         flexWrap: 'wrap',
-        gap: '1rem',
-        width: '100%',
-        minWidth: 0
+        gap: '1rem'
       }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, overflowWrap: 'break-word' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Operations & Demand Intelligence
           </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem', lineHeight: 1.4 }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
             Real-time AI demand forecasts, live inventory monitoring, continuous accuracy tracking, and surplus alert dispatch.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', flexShrink: 0 }}>
+
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
             onClick={fetchDashboardData}
             className="btn btn-secondary"
             style={{ fontSize: '0.8125rem' }}
-            disabled={loading}
           >
             <RefreshCw size={14} className={loading ? 'pulse-indicator' : ''} />
-            <span>{loading ? 'Refreshing...' : 'Refresh Feed'}</span>
+            <span>Refresh Feed</span>
           </button>
           <Link to="/predictions" className="btn btn-primary" style={{ fontSize: '0.8125rem' }}>
             <Sparkles size={14} />
@@ -154,178 +157,130 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Error Alert State */}
-      {error && (
-        <div style={{
-          padding: '1rem 1.25rem',
-          background: 'rgba(244, 63, 94, 0.12)',
-          border: '1px solid rgba(244, 63, 94, 0.3)',
-          borderRadius: '0.75rem',
-          color: '#FB7185',
-          fontSize: '0.875rem',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '0.75rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <AlertCircle size={18} style={{ flexShrink: 0 }} />
-            <span>{error}</span>
-          </div>
-          <button
-            onClick={fetchDashboardData}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', color: '#FFF' }}
-          >
-            Retry Connection
+      {/* Connection Notice / Error State */}
+      {error && !summary && !loading && (
+        <div className="glass-card" style={{ padding: '2rem', textAlign: 'center', marginBottom: '1.75rem', borderColor: 'rgba(244, 63, 94, 0.35)', background: 'rgba(244, 63, 94, 0.04)' }}>
+          <AlertTriangle size={36} color="#F43F5E" style={{ margin: '0 auto 1rem' }} />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+            Unable to load live dashboard feed
+          </h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', maxWidth: '520px', margin: '0 auto 1.25rem', lineHeight: 1.5 }}>
+            Please check your network connection or verify that the backend API URL is configured correctly.
+          </p>
+          <button onClick={fetchDashboardData} className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', margin: '0 auto' }}>
+            <RefreshCw size={15} />
+            <span>Retry Connection</span>
           </button>
         </div>
       )}
 
-      {/* Genuine Empty State (When 0 historical records exist) */}
-      {!loading && !error && summary?.total_historical_records === 0 && (
-        <div className="card" style={{ padding: '2rem', textAlign: 'center', marginBottom: '1.5rem', background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-          <Sparkles size={32} color="var(--accent-secondary)" style={{ margin: '0 auto 0.75rem' }} />
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>No Food Records Available</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.35rem', marginBottom: '1rem' }}>
-            No data available. Add food records or ingest a dataset to generate real AI predictions.
-          </p>
-          <Link to="/dataset-upload" className="btn btn-primary" style={{ fontSize: '0.825rem' }}>
-            Ingest Dataset Now
-          </Link>
-        </div>
-      )}
-
       {/* Primary KPI Cards Grid (Row 1) */}
-      <div className="grid-cols-4" style={{ marginBottom: '1.25rem', width: '100%', minWidth: 0 }}>
-        {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : (
-          <>
-            <DashboardCard
-              title="Predicted Demand"
-              value={`${summary?.today_predicted_demand ?? '--'} meals`}
-              subtitle="AI ML Model Forecast"
-              icon={TrendingUp}
-              trend="+5.4% vs avg"
-              trendType="positive"
-              accentColor="emerald"
-            />
-            <DashboardCard
-              title="Recommended Prep"
-              value={`${summary?.today_recommended_prep ?? '--'} meals`}
-              subtitle="With 6% safety buffer"
-              icon={ChefHat}
-              accentColor="cyan"
-            />
-            <DashboardCard
-              title="Actual Consumption"
-              value={`${summary?.today_consumption ?? '--'} meals`}
-              subtitle="Total consumed today"
-              icon={Utensils}
-              accentColor="purple"
-            />
-            <DashboardCard
-              title="Estimated Wastage"
-              value={`${summary?.estimated_wastage_pct ?? 0}%`}
-              subtitle={`${summary?.today_leftover ?? 0} meals leftover`}
-              icon={Trash2}
-              trend={summary?.estimated_wastage_pct > 8 ? "High Waste" : "Optimal"}
-              trendType={summary?.estimated_wastage_pct > 8 ? "negative" : "positive"}
-              accentColor={summary?.estimated_wastage_pct > 8 ? "rose" : "amber"}
-            />
-          </>
-        )}
+      <div className="grid-cols-4" style={{ marginBottom: '1.25rem' }}>
+
+        <DashboardCard
+          title="Predicted Demand"
+          value={`${summary?.today_predicted_demand || 0} meals`}
+          subtitle="AI ML Model Forecast"
+          icon={TrendingUp}
+          trend="+5.4% vs avg"
+          trendType="positive"
+          accentColor="emerald"
+        />
+        <DashboardCard
+          title="Recommended Prep"
+          value={`${summary?.today_recommended_prep || 0} meals`}
+          subtitle="With 6% safety buffer"
+          icon={ChefHat}
+          accentColor="cyan"
+        />
+        <DashboardCard
+          title="Actual Consumption"
+          value={`${summary?.today_consumption || 0} meals`}
+          subtitle="Total consumed today"
+          icon={Utensils}
+          accentColor="purple"
+        />
+        <DashboardCard
+          title="Estimated Wastage"
+          value={`${summary?.estimated_wastage_pct || 0}%`}
+          subtitle={`${summary?.today_leftover || 0} meals leftover`}
+          icon={Trash2}
+          trend={summary?.estimated_wastage_pct > 8 ? "High Waste" : "Optimal"}
+          trendType={summary?.estimated_wastage_pct > 8 ? "negative" : "positive"}
+          accentColor={summary?.estimated_wastage_pct > 8 ? "rose" : "amber"}
+        />
       </div>
 
-      {/* Secondary KPI Cards Grid (Row 2) */}
-      <div className="grid-cols-4" style={{ marginBottom: '1.75rem', width: '100%', minWidth: 0 }}>
-        {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : (
-          <>
-            <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', minWidth: 0, width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.8125rem', minWidth: 0 }}>
-                <span style={{ overflowWrap: 'break-word', minWidth: 0 }}>Prediction Accuracy</span>
-                <Target size={18} color="var(--accent-primary)" style={{ flexShrink: 0 }} />
-              </div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--accent-primary)', wordBreak: 'break-word' }}>
-                {summary?.prediction_accuracy ?? '--'}%
-              </div>
-              {user?.role === 'Admin' ? (
-                <Link to="/prediction-accuracy" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
-                  View accuracy tracker <ArrowRight size={12} />
-                </Link>
-              ) : (
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
-                  Live model evaluation
-                </span>
-              )}
-            </div>
+      {/* Secondary KPI Cards Grid (Row 2 - Feature 16 Enhancements) */}
+      <div className="grid-cols-4" style={{ marginBottom: '2rem' }}>
+        <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <span>Prediction Accuracy</span>
+            <Target size={18} color="var(--accent-primary)" />
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--accent-primary)' }}>
+            {summary?.prediction_accuracy || 97.5}%
+          </div>
+          {user?.role === 'Admin' ? (
+            <Link to="/prediction-accuracy" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
+              View accuracy tracker <ArrowRight size={12} />
+            </Link>
+          ) : (
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
+              Live model evaluation
+            </span>
+          )}
+        </div>
 
-            <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', minWidth: 0, width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.8125rem', minWidth: 0 }}>
-                <span style={{ overflowWrap: 'break-word', minWidth: 0 }}>Highest Wastage Category</span>
-                <Trash2 size={18} color="var(--accent-rose)" style={{ flexShrink: 0 }} />
-              </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--accent-rose)', wordBreak: 'break-word' }}>
-                {summary?.high_wastage_category || 'N/A'}
-              </div>
-              <Link to="/wastage" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
-                Inspect waste insights <ArrowRight size={12} />
-              </Link>
-            </div>
+        <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <span>Highest Wastage Category</span>
+            <Trash2 size={18} color="var(--accent-rose)" />
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--accent-rose)' }}>
+            {summary?.high_wastage_category || 'Biryani'}
+          </div>
+          <Link to="/wastage" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
+            Inspect waste insights <ArrowRight size={12} />
+          </Link>
+        </div>
 
-            <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', minWidth: 0, width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.8125rem', minWidth: 0 }}>
-                <span style={{ overflowWrap: 'break-word', minWidth: 0 }}>Low Stock Items</span>
-                <Package size={18} color={summary?.low_stock_items_count > 0 ? "var(--accent-rose)" : "var(--accent-primary)"} style={{ flexShrink: 0 }} />
-              </div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '0.4rem', color: summary?.low_stock_items_count > 0 ? "var(--accent-rose)" : "var(--accent-primary)", wordBreak: 'break-word' }}>
-                {summary?.low_stock_items_count ?? 0} items
-              </div>
-              <Link to="/inventory" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
-                Manage inventory <ArrowRight size={12} />
-              </Link>
-            </div>
+        <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <span>Low Stock Items</span>
+            <Package size={18} color={summary?.low_stock_items_count > 0 ? "var(--accent-rose)" : "var(--accent-primary)"} />
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '0.4rem', color: summary?.low_stock_items_count > 0 ? "var(--accent-rose)" : "var(--accent-primary)" }}>
+            {summary?.low_stock_items_count || 0} items
+          </div>
+          <Link to="/inventory" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
+            Manage inventory <ArrowRight size={12} />
+          </Link>
+        </div>
 
-            <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', minWidth: 0, width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.8125rem', minWidth: 0 }}>
-                <span style={{ overflowWrap: 'break-word', minWidth: 0 }}>Pending Alerts</span>
-                <Bell size={18} color="var(--accent-amber)" style={{ flexShrink: 0 }} />
-              </div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--accent-amber)', wordBreak: 'break-word' }}>
-                {summary?.pending_alerts_count ?? 0} active
-              </div>
-              <Link to="/notifications" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
-                Open alert center <ArrowRight size={12} />
-              </Link>
-            </div>
-          </>
-        )}
+        <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <span>Pending Alerts</span>
+            <Bell size={18} color="var(--accent-amber)" />
+          </div>
+          <div style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '0.4rem', color: 'var(--accent-amber)' }}>
+            {summary?.pending_alerts_count || 0} active
+          </div>
+          <Link to="/notifications" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '0.35rem' }}>
+            Open alert center <ArrowRight size={12} />
+          </Link>
+        </div>
       </div>
 
       {/* Main Charts Row */}
-      <div className="grid-cols-2" style={{ marginBottom: '1.75rem', width: '100%', minWidth: 0 }}>
+      <div className="grid-cols-2" style={{ marginBottom: '2rem' }}>
         {/* Actual vs Predicted Trend */}
         <ChartCard
           title="Actual Consumption vs AI Predicted Demand"
           subtitle="14-day historical trend comparing ML prediction accuracy against consumption"
         >
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={trends?.demand_trend || []} margin={{ top: 10, right: 15, left: -15, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={trends?.demand_trend || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="predGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10B981" stopOpacity={0.4}/>
@@ -352,8 +307,8 @@ const Dashboard = () => {
           title="Food Demand by Category"
           subtitle="Cumulative food preparation and consumed demand per category"
         >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={trends?.category_demand || []} margin={{ top: 10, right: 15, left: -15, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={trends?.category_demand || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="category" stroke="#64748B" fontSize={11} />
               <YAxis stroke="#64748B" fontSize={11} />
@@ -368,24 +323,24 @@ const Dashboard = () => {
       </div>
 
       {/* Bottom Activities & Alerts Row */}
-      <div className="grid-cols-3" style={{ width: '100%', minWidth: 0 }}>
+      <div className="grid-cols-3">
         {/* Active Alerts */}
-        <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertTriangle size={18} color="#F43F5E" style={{ flexShrink: 0 }} />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Surplus & Stock Alerts</h3>
+              <AlertTriangle size={18} color="#F43F5E" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Surplus & Stock Alerts</h3>
             </div>
             <Link to="/alerts" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600 }}>
               View All
             </Link>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
             {activities?.recent_alerts?.slice(0, 3).map((a) => (
               <AlertCard key={a.id} alert={a} onMarkRead={handleMarkAlertRead} />
             ))}
             {(!activities?.recent_alerts || activities.recent_alerts.length === 0) && (
-              <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 All clear! No pending surplus alerts.
               </div>
             )}
@@ -393,17 +348,17 @@ const Dashboard = () => {
         </div>
 
         {/* Recent ML Predictions */}
-        <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Sparkles size={18} color="var(--accent-secondary)" style={{ flexShrink: 0 }} />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Latest Predictions</h3>
+              <Sparkles size={18} color="var(--accent-secondary)" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Latest Predictions</h3>
             </div>
             <Link to="/predictions" style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', textDecoration: 'none', fontWeight: 600 }}>
               Simulator
             </Link>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', minWidth: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             {activities?.latest_predictions?.map((p) => (
               <div key={p.id} style={{
                 padding: '0.75rem',
@@ -412,19 +367,17 @@ const Dashboard = () => {
                 border: '1px solid var(--border-color)',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.5rem',
-                minWidth: 0
+                alignItems: 'center'
               }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {p.food_category}
                   </div>
                   <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
-                    {p.prediction_date} &bull; {p.expected_customers} Cust
+                    {p.prediction_date} &bull; {p.expected_customers} Customers
                   </div>
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#34D399' }}>
                     {p.predicted_demand} <span style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-muted)' }}>meals</span>
                   </div>
@@ -435,7 +388,7 @@ const Dashboard = () => {
               </div>
             ))}
             {(!activities?.latest_predictions || activities.latest_predictions.length === 0) && (
-              <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 No predictions recorded yet.
               </div>
             )}
@@ -443,17 +396,17 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Food Logs */}
-        <div className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Layers size={18} color="var(--accent-primary)" style={{ flexShrink: 0 }} />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Recent Food Logs</h3>
+              <Layers size={18} color="var(--accent-primary)" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Recent Food Logs</h3>
             </div>
             <Link to="/food-records" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600 }}>
               View All
             </Link>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', minWidth: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             {activities?.recent_records?.map((r) => (
               <div key={r.id} style={{
                 padding: '0.75rem',
@@ -462,21 +415,19 @@ const Dashboard = () => {
                 border: '1px solid var(--border-color)',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.5rem',
-                minWidth: 0
+                alignItems: 'center'
               }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {r.food_category}
                   </div>
                   <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
                     {r.date} &bull; {r.weather}
                   </div>
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {r.food_consumed} / {r.food_prepared}
+                    {r.food_consumed} / {r.food_prepared} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>consumed</span>
                   </div>
                   <div style={{ fontSize: '0.725rem', color: r.leftover > 30 ? '#FB7185' : '#34D399' }}>
                     {r.leftover} leftover

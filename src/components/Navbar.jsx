@@ -11,8 +11,7 @@ import {
   Check,
   CheckCheck,
   Clock,
-  X,
-  Menu
+  X
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -20,8 +19,7 @@ import SystemHealthBadge from './SystemHealthBadge';
 import api from '../services/api';
 import { useISTClock } from '../utils/timeUtils';
 
-const Navbar = ({ onToggleMobileMenu = () => {} }) => {
-
+const Navbar = () => {
   const { user, logout, token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -126,50 +124,20 @@ const Navbar = ({ onToggleMobileMenu = () => {} }) => {
       top: 0,
       zIndex: 30
     }}>
-      {/* Mobile Hamburger & Page Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button
-          type="button"
-          onClick={onToggleMobileMenu}
-          className="mobile-hamburger-btn"
-          style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-primary)',
-            width: '38px',
-            height: '38px',
-            borderRadius: '10px',
-            display: 'none',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flexShrink: 0
-          }}
-          title="Open Menu"
-        >
-          <Menu size={20} />
-        </button>
-        <style>{`
-          @media (max-width: 768px) {
-            .mobile-hamburger-btn { display: flex !important; }
-          }
-        `}</style>
-        <div>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-            {getPageTitle(location.pathname)}
-          </h2>
-          <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
-            PredictIQ System &bull; <span style={{ color: 'var(--accent-primary)' }}>Live Operational</span>
-          </div>
+      {/* Page Title & Breadcrumb */}
+      <div>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          {getPageTitle(location.pathname)}
+        </h2>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          PredictIQ System &bull; <span style={{ color: 'var(--accent-primary)' }}>Live Operational</span>
         </div>
       </div>
 
-
       {/* Action Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-        {/* Live IST 12-Hour Clock Badge (Hidden on Dashboard, ML Predictions, Alerts, and User Management pages) */}
-        {!(location.pathname === '/dashboard' || location.pathname === '/predictions' || location.pathname === '/alerts' || location.pathname === '/user-management') && (
-
+        {/* Live IST 12-Hour Clock Badge (Hidden on Dashboard, ML Predictions, and Alerts pages) */}
+        {!(location.pathname === '/dashboard' || location.pathname === '/predictions' || location.pathname === '/alerts') && (
 
           <div style={{
             display: 'flex',

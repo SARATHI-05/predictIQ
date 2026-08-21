@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   Shield, 
   Download, 
@@ -10,6 +9,7 @@ import {
   Square, 
   AlertTriangle 
 } from 'lucide-react';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatIST } from '../utils/timeUtils';
@@ -44,15 +44,14 @@ const AuditLogs = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      let url = `http://127.0.0.1:8000/api/audit-logs?page=${page}&page_size=${pageSize}`;
+      let url = `/api/audit-logs?page=${page}&page_size=${pageSize}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (selectedModule && selectedModule !== 'All') url += `&module=${encodeURIComponent(selectedModule)}`;
       if (selectedAction && selectedAction !== 'All') url += `&action=${encodeURIComponent(selectedAction)}`;
       if (startDate) url += `&start_date=${startDate}`;
       if (endDate) url += `&end_date=${endDate}`;
 
-      const res = await axios.get(url, { headers });
+      const res = await api.get(url);
       setLogs(res.data.data || []);
       setTotal(res.data.total || 0);
       setTotalPages(res.data.total_pages || 1);
@@ -70,15 +69,14 @@ const AuditLogs = () => {
 
   const handleExportCsv = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      let url = `http://127.0.0.1:8000/api/audit-logs/export/csv?`;
+      let url = `/api/audit-logs/export/csv?`;
       if (search) url += `search=${encodeURIComponent(search)}&`;
       if (selectedModule && selectedModule !== 'All') url += `module=${encodeURIComponent(selectedModule)}&`;
       if (selectedAction && selectedAction !== 'All') url += `action=${encodeURIComponent(selectedAction)}&`;
       if (startDate) url += `start_date=${startDate}&`;
       if (endDate) url += `end_date=${endDate}&`;
 
-      const res = await axios.get(url, { headers, responseType: 'blob' });
+      const res = await api.get(url, { responseType: 'blob' });
       const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = blobUrl;
@@ -117,16 +115,13 @@ const AuditLogs = () => {
     }
 
     setDeleting(true);
-    const headers = { Authorization: `Bearer ${token}` };
-
     try {
       if (deleteConfirmModal.type === 'single') {
         const id = deleteConfirmModal.item.id;
-        await axios.delete(`http://127.0.0.1:8000/api/audit-logs/${id}`, { headers });
+        await api.delete(`/api/audit-logs/${id}`);
         toast.success(`Audit record #${id} deleted successfully`);
       } else if (deleteConfirmModal.type === 'bulk') {
-        await axios.delete('http://127.0.0.1:8000/api/audit-logs/bulk', {
-          headers,
+        await api.delete('/api/audit-logs/bulk', {
           data: { ids: selectedIds }
         });
         toast.success(`Successfully deleted ${selectedIds.length} audit record(s)`);
@@ -142,6 +137,7 @@ const AuditLogs = () => {
   };
 
   return (
+
     <div className="page-wrapper">
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -342,7 +338,8 @@ const AuditLogs = () => {
                       </td>
                       <td style={{ maxWidth: '350px', fontSize: '0.85rem' }}>{l.description}</td>
                       <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{l.record_id || 'N/A'}</td>
-                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{l.ip_address || '127.0.0.1'}</td>
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{l.ip_address || '—'}</td>
+
 
                       {isAdmin && (
                         <td style={{ textAlign: 'right' }}>

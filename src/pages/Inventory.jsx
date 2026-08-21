@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   Package, Plus, AlertTriangle, ArrowUpRight, ArrowDownLeft, 
   TrendingDown, ShoppingCart, RefreshCw, Download, Search, CheckCircle, Edit2, Trash2 
 } from 'lucide-react';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/Modal';
@@ -49,11 +49,10 @@ const Inventory = () => {
   const fetchInventory = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
       const [itemsRes, sumRes, recRes] = await Promise.all([
-        axios.get(`http://127.0.0.1:8000/api/inventory?category=${selectedCategory}&search=${search}`, { headers }),
-        axios.get('http://127.0.0.1:8000/api/inventory/summary', { headers }),
-        axios.get('http://127.0.0.1:8000/api/inventory/purchase-recommendations', { headers })
+        api.get(`/api/inventory?category=${selectedCategory}&search=${search}`),
+        api.get('/api/inventory/summary'),
+        api.get('/api/inventory/purchase-recommendations')
       ]);
       setItems(itemsRes.data);
       setSummary(sumRes.data);
@@ -72,8 +71,7 @@ const Inventory = () => {
   const handleAddItem = async (e) => {
     e.preventDefault();
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.post('http://127.0.0.1:8000/api/inventory', newItem, { headers });
+      await api.post('/api/inventory', newItem);
       toast.success(`Added ${newItem.ingredient_name} to inventory!`);
       setShowAddModal(false);
       fetchInventory();
@@ -86,11 +84,9 @@ const Inventory = () => {
     e.preventDefault();
     if (!selectedItem) return;
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(
-        `http://127.0.0.1:8000/api/inventory/${selectedItem.id}/adjust`,
-        adjustData,
-        { headers }
+      await api.post(
+        `/api/inventory/${selectedItem.id}/adjust`,
+        adjustData
       );
       toast.success(`Updated stock for ${selectedItem.ingredient_name}`);
       setShowAdjustModal(false);
@@ -103,14 +99,14 @@ const Inventory = () => {
   const handleDeleteItem = async (id, name) => {
     if (!window.confirm(`Are you sure you want to remove '${name}' from inventory?`)) return;
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.delete(`http://127.0.0.1:8000/api/inventory/${id}`, { headers });
+      await api.delete(`/api/inventory/${id}`);
       toast.success(`Removed ${name} from inventory`);
       fetchInventory();
     } catch (err) {
       toast.error('Failed to delete item');
     }
   };
+
 
   return (
     <div className="page-wrapper">
