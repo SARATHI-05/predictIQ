@@ -18,7 +18,8 @@ from app.utils.auth import get_current_user
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
 @router.get("/summary")
-def get_dashboard_summary(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_dashboard_summary(db: Session = Depends(get_db)):
+
     """
     Feature 16: Enhanced KPI summary cards with:
     - Today's demand and prep numbers
@@ -134,10 +135,10 @@ def get_dashboard_summary(db: Session = Depends(get_db), current_user: User = De
     }
 
 @router.get("/trends")
-def get_dashboard_trends(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_dashboard_trends(db: Session = Depends(get_db)):
     """Fetch structured time-series and category aggregation data for dashboard charts"""
     records = db.query(FoodRecord).order_by(FoodRecord.date.asc()).all()
-    
+
     # 1. Actual vs Predicted Demand / Demand Trend (Group by date)
     date_groups = {}
     for r in records:
@@ -190,7 +191,8 @@ def get_dashboard_trends(db: Session = Depends(get_db), current_user: User = Dep
     }
 
 @router.get("/recent-activities")
-def get_recent_activities(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_recent_activities(db: Session = Depends(get_db)):
+
     """Fetch latest activities across uploads, predictions, food records, and active alerts"""
     latest_uploads = db.query(DatasetLog).order_by(DatasetLog.id.desc()).limit(3).all()
     latest_predictions = db.query(Prediction).order_by(Prediction.id.desc()).limit(4).all()
