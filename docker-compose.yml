@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: predictiq-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+pymysql://predictiq:predictiq123@db:3306/predictiq_db
+      - SECRET_KEY=predictiq-docker-secret-key-2026
+    depends_on:
+      - db
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: predictiq-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: always
+
+  db:
+    image: mysql:8.0
+    container_name: predictiq-mysql
+    environment:
+      - MYSQL_DATABASE=predictiq_db
+      - MYSQL_USER=predictiq
+      - MYSQL_PASSWORD=predictiq123
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  db_data:
