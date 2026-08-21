@@ -167,8 +167,9 @@ const Navbar = ({ onToggleMobileMenu = () => {} }) => {
 
       {/* Action Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-        {/* Live IST 12-Hour Clock Badge (Hidden on Dashboard, ML Predictions, and Alerts pages) */}
-        {!(location.pathname === '/dashboard' || location.pathname === '/predictions' || location.pathname === '/alerts') && (
+        {/* Live IST 12-Hour Clock Badge (Hidden on Dashboard, ML Predictions, Alerts, and User Management pages) */}
+        {!(location.pathname === '/dashboard' || location.pathname === '/predictions' || location.pathname === '/alerts' || location.pathname === '/user-management') && (
+
 
           <div style={{
             display: 'flex',
