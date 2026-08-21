@@ -1,14 +1,28 @@
 import axios from 'axios';
 
 const getApiBaseUrl = () => {
+  // 1. Explicit environment variable set in Vercel / Render / .env
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // Dynamic host fallback for mobile / local network testing
+
   const hostname = window.location.hostname;
-  if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+
+  // 2. Production Vercel / Netlify CDN deployments
+  if (hostname.includes('vercel.app') || hostname.includes('netlify.app') || hostname.includes('render.com')) {
+    return 'https://predictiq-backend.onrender.com';
+  }
+
+  // 3. Local Wi-Fi network testing from mobile phone (e.g. 192.168.x.x)
+  if (
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    hostname.startsWith('172.')
+  ) {
     return `http://${hostname}:8000`;
   }
+
+  // 4. Default local development fallback
   return 'http://127.0.0.1:8000';
 };
 
