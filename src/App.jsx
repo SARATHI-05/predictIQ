@@ -33,11 +33,13 @@ import NotificationCenter from './pages/NotificationCenter';
 
 // Main App Layout Wrapper for Protected Pages
 const AppLayout = ({ children }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
   return (
     <div className="app-container">
-      <Sidebar />
+      <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       <div className="main-content">
-        <Navbar />
+        <Navbar onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         <main style={{ flex: 1 }}>
           {children}
         </main>
@@ -45,6 +47,7 @@ const AppLayout = ({ children }) => {
     </div>
   );
 };
+
 
 function App() {
   return (
