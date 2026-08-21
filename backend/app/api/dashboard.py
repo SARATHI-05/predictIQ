@@ -36,11 +36,15 @@ def get_dashboard_summary(db: Session = Depends(get_db), current_user: User = De
 
     # Query records on the latest date
     day_records = db.query(FoodRecord).filter(FoodRecord.date == target_date).all()
+    if not day_records:
+        day_records = db.query(FoodRecord).order_by(FoodRecord.date.desc()).limit(5).all()
+
     today_prep = sum(r.food_prepared for r in day_records) if day_records else 0
     today_cons = sum(r.food_consumed for r in day_records) if day_records else 0
     today_left = sum(r.leftover for r in day_records) if day_records else 0
     today_cust = sum(r.expected_customers for r in day_records) if day_records else 0
     waste_pct = round((today_left / max(1, today_prep)) * 100, 1) if today_prep > 0 else 0.0
+
 
     # Query latest prediction
     latest_pred = db.query(Prediction).order_by(Prediction.prediction_date.desc(), Prediction.id.desc()).first()
