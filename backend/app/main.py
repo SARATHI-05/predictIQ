@@ -39,14 +39,10 @@ from app.api import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Run database initialization and model loading
     print("Starting PredictIQ Backend...")
-    try:
-        init_db()
-    except Exception as e:
-        print(f"Warning: Database initialization error: {e}")
     yield
     print("Shutting down PredictIQ Backend...")
+
 
 app = FastAPI(
     title="PredictIQ API",
