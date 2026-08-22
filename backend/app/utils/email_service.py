@@ -2,6 +2,7 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate, make_msgid
 from dotenv import load_dotenv
 
 def send_verification_email(to_email: str, code: str) -> bool:
@@ -62,8 +63,11 @@ This code expires in 15 minutes. If you did not request this password reset, ple
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = f"PredictIQ Security <{from_email}>"
+    msg["From"] = f"PredictIQ Support <{from_email}>"
     msg["To"] = to_email
+    msg["Reply-To"] = from_email
+    msg["Date"] = formatdate(localtime=True)
+    msg["Message-ID"] = make_msgid(domain="gmail.com")
 
     msg.attach(MIMEText(text_content, "plain"))
     msg.attach(MIMEText(html_content, "html"))
