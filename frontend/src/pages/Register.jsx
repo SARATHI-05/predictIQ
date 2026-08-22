@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, User, Lock, Mail, Shield, ArrowRight, AlertCircle } from 'lucide-react';
-import GoogleLogin from '../components/GoogleLogin';
+import { Sparkles, User, Lock, Mail, Shield, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('Staff');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,9 +17,15 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
     setLoading(true);
 
-    const result = await register(name, email, password, role);
+    const result = await register(name.trim(), email.trim(), password, role);
     setLoading(false);
 
     if (result.success) {
@@ -48,7 +54,7 @@ const Register = () => {
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
         {/* Logo Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
             width: '54px',
             height: '54px',
@@ -89,39 +95,15 @@ const Register = () => {
           </div>
         )}
 
-        {/* GOOGLE SIGN UP BUTTON */}
-        <div style={{ marginBottom: '1.25rem' }}>
-          <GoogleLogin
-            buttonText="Sign up with Google"
-            onError={(err) => setError(err)}
-            onSuccess={() => navigate('/dashboard')}
-          />
-        </div>
-
-        {/* Divider */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          margin: '1.25rem 0',
-          color: 'var(--text-muted)',
-          fontSize: '0.725rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em'
-        }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-          <span>Or register with email</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-        </div>
-
         {/* Standard Email Registration Form */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="on">
           <div className="form-group">
             <label className="form-label">Full Name</label>
             <div style={{ position: 'relative' }}>
               <input
                 type="text"
                 required
+                autoComplete="name"
                 className="form-control"
                 placeholder="e.g. John Doe"
                 value={name}
@@ -138,13 +120,13 @@ const Register = () => {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 className="form-control"
-                placeholder="yourname@gmail.com"
+                placeholder="name@organization.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{ paddingLeft: '2.5rem' }}
               />
-
               <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
           </div>
@@ -153,15 +135,34 @@ const Register = () => {
             <label className="form-label">Password</label>
             <div style={{ position: 'relative' }}>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
+                autoComplete="new-password"
                 className="form-control"
-                placeholder="••••••••"
+                placeholder="Minimum 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ paddingLeft: '2.5rem' }}
+                style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
               />
               <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.9rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
@@ -175,7 +176,7 @@ const Register = () => {
                 style={{ paddingLeft: '2.5rem' }}
               >
                 <option value="Staff">Kitchen Staff (Food Records, Predictions, Reports)</option>
-                <option value="Admin">System Administrator (Full Management)</option>
+                <option value="Admin">System Administrator (Full Management & ML)</option>
               </select>
               <Shield size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
@@ -185,7 +186,7 @@ const Register = () => {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
+            style={{ width: '100%', padding: '0.85rem', marginTop: '0.75rem' }}
           >
             {loading ? 'Creating Account...' : 'Complete Registration'}
             {!loading && <ArrowRight size={16} />}

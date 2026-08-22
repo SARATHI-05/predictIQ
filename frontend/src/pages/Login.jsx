@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import GoogleLogin from '../components/GoogleLogin';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -19,7 +18,7 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    const result = await login(email, password);
+    const result = await login(email.trim(), password);
     setLoading(false);
 
     if (result.success) {
@@ -48,7 +47,7 @@ const Login = () => {
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
         {/* Logo Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
             width: '56px',
             height: '56px',
@@ -89,42 +88,17 @@ const Login = () => {
           </div>
         )}
 
-        {/* PRIMARY GOOGLE SIGN-IN VIA FIREBASE */}
-        <div style={{ marginBottom: '1.25rem' }}>
-          <GoogleLogin
-            buttonText="Sign in with Google"
-            onError={(err) => setError(err)}
-            onSuccess={() => navigate('/dashboard')}
-          />
-        </div>
-
-        {/* Divider */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          margin: '1.25rem 0',
-          color: 'var(--text-muted)',
-          fontSize: '0.75rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em'
-        }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-          <span>Or sign in with Gmail / Password</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-        </div>
-
-        {/* Gmail & Password Form */}
-        <form onSubmit={handleEmailSubmit} autoComplete="off">
+        {/* Email & Password Authentication Form */}
+        <form onSubmit={handleEmailSubmit} autoComplete="on">
           <div className="form-group">
-            <label className="form-label">Gmail / Email Address</label>
+            <label className="form-label">Email Address</label>
             <div style={{ position: 'relative' }}>
               <input
                 type="email"
                 required
-                autoComplete="off"
+                autoComplete="email"
                 className="form-control"
-                placeholder="yourname@gmail.com"
+                placeholder="name@organization.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{ paddingLeft: '2.5rem' }}
@@ -152,7 +126,7 @@ const Login = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                autoComplete="new-password"
+                autoComplete="current-password"
                 className="form-control"
                 placeholder="••••••••"
                 value={password}
@@ -175,6 +149,7 @@ const Login = () => {
                   cursor: 'pointer',
                   padding: 0
                 }}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -185,9 +160,9 @@ const Login = () => {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
+            style={{ width: '100%', padding: '0.85rem', marginTop: '0.75rem' }}
           >
-            {loading ? 'Authenticating...' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Sign In to PredictIQ'}
             {!loading && <ArrowRight size={16} />}
           </button>
         </form>

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { auth } from '../firebase';
 
 // Dynamic API Base URL resolution
 export const getApiBaseUrl = () => {
@@ -46,28 +45,13 @@ const api = axios.create({
   timeout: 30000,
 });
 
-// Request Interceptor: Attach fresh Firebase ID Token or standard JWT
+// Request Interceptor: Attach standard PredictIQ JWT access token
 api.interceptors.request.use(
-  async (config) => {
-    try {
-      if (auth && auth.currentUser) {
-        // Obtain current Firebase user ID token dynamically without storing it in localStorage
-        const fbToken = await auth.currentUser.getIdToken();
-        if (fbToken) {
-          config.headers.Authorization = `Bearer ${fbToken}`;
-          return config;
-        }
-      }
-    } catch (tokenErr) {
-      console.warn('[API Auth] Failed to retrieve dynamic Firebase ID token:', tokenErr);
-    }
-
-    // Fallback to local session token if available
+  (config) => {
     const localToken = localStorage.getItem('predictiq_token');
     if (localToken && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${localToken}`;
     }
-
     return config;
   },
   (error) => {
@@ -76,7 +60,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response Interceptor: Token Refresh Retry & Structured Error Logging
+// Response Interceptor: Structured Error Logging & HTML Detection
 api.interceptors.response.use(
   (response) => {
     // Check if a static SPA index.html was returned instead of JSON (common when backend is not deployed on CDN/Vercel)
@@ -98,7 +82,7 @@ api.interceptors.response.use(
     }
     return response;
   },
-  async (error) => {
+  (error) => {
     const originalRequest = error.config;
 
     // Error Diagnosis & Logging
@@ -106,16 +90,10 @@ api.interceptors.response.use(
       const { status, data } = error.response;
       console.warn(`[API ${status} Error] [${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}]:`, data?.detail || data?.message || data);
 
-      // Handle 401 Unauthorized with automatic token refresh and single retry
-      if (status === 401 && !originalRequest._retry && auth?.currentUser) {
-        originalRequest._retry = true;
-        try {
-          console.info('[API Auth] 401 received. Refreshing Firebase ID token with getIdToken(true)...');
-          const refreshedToken = await auth.currentUser.getIdToken(true);
-          originalRequest.headers.Authorization = `Bearer ${refreshedToken}`;
-          return api(originalRequest);
-        } catch (refreshErr) {
-          console.error('[API Auth] Token refresh failed:', refreshErr);
+      if (status === 401) {
+        // If unauthorized and not on auth pages, prompt sign in
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          console.warn('[API Auth] Session expired or invalid.');
         }
       }
     } else if (error.request) {

@@ -91,115 +91,15 @@ def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
     """
-    Unified Authentication Endpoint:
-    1. If 'token' or 'credential' is provided -> Verifies Firebase Google ID Token and syncs SQL User.
-    2. If 'email' and 'password' is provided -> Authenticates with password hash.
+    Standard Email & Password Authentication Endpoint.
     """
-    token_str = (payload.token or payload.credential or "").strip()
-    if not token_str:
-        auth_header = request.headers.get("authorization", "")
-        if auth_header.lower().startswith("bearer "):
-            token_str = auth_header[7:].strip()
-
-
-    # --- CASE 1: Firebase Google Authentication ---
-    if token_str:
-        user_info = verify_firebase_id_token(token_str)
-        uid = user_info.get("uid")
-        email = user_info.get("email", "").lower()
-        name = user_info.get("name") or (email.split("@")[0].capitalize() if email else "Google User")
-        avatar = user_info.get("picture")
-
-        # Find existing user in SQL database by firebase_uid or email
-        user = db.query(User).filter(
-            (User.firebase_uid == uid) | (User.email == email) | (User.google_id == uid)
-        ).first()
-
-        if user:
-            if not getattr(user, 'is_active', True):
-                log_audit_event(
-                    db=db,
-                    action="LOGIN_BLOCKED",
-                    module="Authentication",
-                    description=f"Blocked login for deactivated user: {user.email}",
-                    user=user,
-                    request=request
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Your account has been deactivated. Please contact your system administrator."
-                )
-
-            # Update Firebase UID, avatar, and last login
-            if uid and not user.firebase_uid:
-                user.firebase_uid = uid
-            if avatar:
-                user.avatar_url = avatar
-            if "admin" in email or token_str == "demo_google_admin":
-                user.role = "Admin"
-            user.last_login = datetime.utcnow()
-            db.commit()
-            db.refresh(user)
-
-            log_audit_event(
-                db=db,
-                action="LOGIN_SUCCESS_FIREBASE",
-                module="Authentication",
-                description=f"User {user.email} authenticated via Firebase Google Sign-In",
-                user=user,
-                record_id=str(user.id),
-                request=request
-            )
-        else:
-            # Create new user in SQL database
-            user_count = db.query(User).count()
-            if "admin" in email or token_str == "demo_google_admin" or user_count == 0:
-                role = "Admin"
-            else:
-                role = "Staff"
-
-            user = User(
-                name=name,
-                email=email,
-                firebase_uid=uid,
-                google_id=uid,
-                avatar_url=avatar,
-                password_hash=f"oauth_firebase_{secrets.token_hex(16)}",
-                role=role,
-                is_active=True,
-                last_login=datetime.utcnow()
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-
-            log_audit_event(
-                db=db,
-                action="USER_REGISTERED_FIREBASE",
-                module="Authentication",
-                description=f"New user registered via Firebase Google Sign-In: {user.email} (Role: {user.role})",
-                user=user,
-                record_id=str(user.id),
-                request=request
-            )
-
-        jwt_token = create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
-        return {
-            "success": True,
-            "message": "Login successful",
-            "access_token": jwt_token,
-            "token_type": "bearer",
-            "user": user
-        }
-
-    # --- CASE 2: Traditional Email & Password Login ---
     if not payload.email or not payload.password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please provide a valid Firebase token or email and password"
+            detail="Please provide both email and password"
         )
 
-    user = db.query(User).filter(User.email == payload.email).first()
+    user = db.query(User).filter(User.email == payload.email.strip().lower()).first()
     
     if not user:
         log_audit_event(
@@ -215,10 +115,10 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
             detail="Incorrect email or password"
         )
 
-    if not user.password_hash or user.password_hash.startswith("oauth_"):
+    if not user.password_hash:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This account was registered with Google. Please use 'Continue with Google' or use Forgot Password."
+            detail="Password is not configured. Please use Forgot Password to set a new password."
         )
 
     if not verify_password(payload.password, user.password_hash):
