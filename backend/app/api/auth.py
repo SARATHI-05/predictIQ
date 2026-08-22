@@ -1,7 +1,6 @@
 import os
 import secrets
 from datetime import datetime, timedelta
-import requests
 from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 
@@ -30,66 +29,208 @@ from app.utils.auth import (
 )
 from app.utils.audit import log_audit_event
 from app.utils.firebase_auth import verify_firebase_id_token
-from app.utils.email_service import send_verification_email, send_welcome_email
-
+from app.services.email_service import (
+    send_signup_verification_code,
+    send_forgot_password_code,
+    send_welcome_email,
+    send_google_verification_email
+)
+from app.services.otp_service import (
+    generate_and_save_otp,
+    verify_otp,
+    can_resend_otp
+)
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
+
+# -------------------------------------------------------------------------
+# 1. SIGNUP & EMAIL VERIFICATION FLOW
+# -------------------------------------------------------------------------
+
 @router.post("/register", response_model=TokenResponse)
 def register(user_in: UserCreate, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """
+    Step 1 of Signup Flow:
+    Validates user input, creates/updates pending user account,
+    generates 6-digit signup OTP, and dispatches verification email to the user's entered email.
+    """
     if len(user_in.password) < 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 6 characters long"
+            detail="Password must be at least 6 characters long."
         )
 
-    # Check if user already exists
-    existing = db.query(User).filter(User.email == user_in.email).first()
-    if existing:
+    email = user_in.email.strip().lower()
+
+    # Check if active verified account already exists
+    existing = db.query(User).filter(User.email == email).first()
+    if existing and getattr(existing, 'is_active', True) and existing.last_login:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A user with this email already exists"
+            detail="An account with this email already exists. Please sign in."
         )
-    
-    # First user registered is Admin, subsequent are Staff by default unless specified
+
+    # First user registered in system is Admin, subsequent are Staff by default unless specified
     user_count = db.query(User).count()
     role = "Admin" if user_count == 0 else (user_in.role or "Staff")
 
-    new_user = User(
-        name=user_in.name,
-        email=user_in.email,
-        password_hash=get_password_hash(user_in.password),
-        role=role,
-        is_active=True,
-        last_login=datetime.utcnow()
-    )
-    db.add(new_user)
+    # Generate 6-digit numeric OTP specifically for purpose='signup'
+    otp_code = generate_and_save_otp(db=db, email=email, purpose="signup", expiry_minutes=10)
+
+    if existing:
+        user = existing
+        user.name = user_in.name.strip()
+        user.password_hash = get_password_hash(user_in.password)
+        user.role = role
+        user.is_active = False
+        user.reset_token = otp_code
+        user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
+    else:
+        user = User(
+            name=user_in.name.strip(),
+            email=email,
+            password_hash=get_password_hash(user_in.password),
+            role=role,
+            is_active=False,
+            last_login=None,
+            reset_token=otp_code,
+            reset_token_expiry=datetime.utcnow() + timedelta(minutes=10)
+        )
+        db.add(user)
+
     db.commit()
-    db.refresh(new_user)
+    db.refresh(user)
+
+    # Dispatch Signup OTP email to the user's entered email address
+    background_tasks.add_task(send_signup_verification_code, user.email, otp_code, user.name)
 
     log_audit_event(
         db=db,
-        action="USER_REGISTERED",
+        action="USER_SIGNUP_INITIATED",
         module="Authentication",
-        description=f"New user registered: {new_user.email} (Role: {new_user.role})",
-        user=new_user,
-        record_id=str(new_user.id),
+        description=f"Signup verification code sent to {user.email}",
+        user=user,
+        record_id=str(user.id),
         request=request
     )
 
-    # Dispatch Welcome Email asynchronously in the background
-    background_tasks.add_task(send_welcome_email, new_user.email, new_user.name, new_user.role)
-
-    token = create_access_token(data={"sub": new_user.email, "role": new_user.role, "name": new_user.name})
     return {
         "success": True,
-        "message": "Registration successful",
+        "requires_verification": True,
+        "email": user.email,
+        "name": user.name,
+        "message": f"Verification code sent to {user.email}. Please check your email inbox to complete registration."
+    }
+
+
+@router.post("/register/verify", response_model=TokenResponse)
+@router.post("/signup/verify", response_model=TokenResponse)
+def verify_signup_code(payload: VerifyCodeRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """
+    Step 2 of Signup Flow:
+    Verifies the 6-digit signup OTP, activates the user account,
+    sends an official Welcome Email to the user, and issues a JWT token.
+    """
+    email = payload.email.strip().lower()
+    code = payload.code.strip()
+
+    if not code or len(code) != 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please enter a valid 6-digit verification code."
+        )
+
+    # 1. Verify OTP with purpose='signup'
+    is_valid, err_msg = verify_otp(db=db, email=email, code=code, purpose="signup")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No registration found for this email address."
+        )
+
+    # Fallback to user.reset_token for backward compatibility
+    if not is_valid:
+        if user.reset_token and user.reset_token == code and (not user.reset_token_expiry or user.reset_token_expiry > datetime.utcnow()):
+            is_valid = True
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=err_msg
+            )
+
+    # 2. Activate user account
+    user.is_active = True
+    user.reset_token = None
+    user.reset_token_expiry = None
+    user.last_login = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+
+    # 3. Dispatch official Welcome Email to verified user
+    background_tasks.add_task(send_welcome_email, user.email, user.name, user.role)
+
+    log_audit_event(
+        db=db,
+        action="USER_SIGNUP_VERIFIED",
+        module="Authentication",
+        description=f"User {user.email} verified email and completed registration",
+        user=user,
+        record_id=str(user.id),
+        request=request
+    )
+
+    token = create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
+    return {
+        "success": True,
+        "message": "Account verified successfully! Welcome to PredictIQ.",
         "access_token": token,
         "token_type": "bearer",
-        "user": new_user
+        "user": user
     }
+
+
+@router.post("/register/resend-code", response_model=SimpleMessageResponse)
+@router.post("/signup/resend-code", response_model=SimpleMessageResponse)
+def resend_signup_code(payload: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """
+    Resends 6-digit verification code for signup with 60-second cooldown rate limit.
+    """
+    email = payload.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No registration found for this email address."
+        )
+
+    allowed, cooldown = can_resend_otp(db=db, email=email, purpose="signup", cooldown_seconds=60)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Please wait {cooldown} seconds before requesting a new verification code."
+        )
+
+    otp_code = generate_and_save_otp(db=db, email=email, purpose="signup", expiry_minutes=10)
+    user.reset_token = otp_code
+    user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
+    db.commit()
+
+    background_tasks.add_task(send_signup_verification_code, user.email, otp_code, user.name)
+
+    return {
+        "success": True,
+        "message": f"A fresh 6-digit verification code has been dispatched to {user.email}."
+    }
+
+
+# -------------------------------------------------------------------------
+# 2. LOGIN (EMAIL/PASSWORD & GOOGLE FIREBASE)
+# -------------------------------------------------------------------------
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
@@ -112,13 +253,12 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
         name = user_info.get("name") or (email.split("@")[0].capitalize() if email else "Google User")
         avatar = user_info.get("picture")
 
-        # Find existing user in SQL database by firebase_uid or email
         user = db.query(User).filter(
             (User.firebase_uid == uid) | (User.email == email) | (User.google_id == uid)
         ).first()
 
         if user:
-            if not getattr(user, 'is_active', True):
+            if not getattr(user, 'is_active', True) and user.last_login:
                 log_audit_event(
                     db=db,
                     action="LOGIN_BLOCKED",
@@ -132,9 +272,9 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                     detail="Your account has been deactivated. Please contact your system administrator."
                 )
 
-            # If user has a pending verification code and has never logged in, require OTP verification
+            # If user has a pending verification code and has never completed onboarding
             if user.reset_token and not user.last_login:
-                background_tasks.add_task(send_verification_email, user.email, user.reset_token)
+                background_tasks.add_task(send_google_verification_email, user.email, user.reset_token, user.name)
                 return {
                     "success": True,
                     "requires_verification": True,
@@ -143,13 +283,13 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                     "message": f"A 6-digit verification code has been sent to your Gmail ({user.email}). Please enter it to complete signup."
                 }
 
-            # Update Firebase UID, avatar, and last login
             if uid and not user.firebase_uid:
                 user.firebase_uid = uid
             if avatar:
                 user.avatar_url = avatar
             if "admin" in email or token_str == "demo_google_admin":
                 user.role = "Admin"
+            user.is_active = True
             user.last_login = datetime.utcnow()
             db.commit()
             db.refresh(user)
@@ -168,8 +308,7 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
             user_count = db.query(User).count()
             role = "Admin" if ("admin" in email or token_str == "demo_google_admin" or user_count == 0) else "Staff"
 
-            # Generate 6-digit verification code
-            otp_code = f"{secrets.randbelow(900000) + 100000}"
+            otp_code = generate_and_save_otp(db=db, email=email, purpose="google_signup", expiry_minutes=10)
 
             user = User(
                 name=name,
@@ -179,17 +318,17 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                 avatar_url=avatar,
                 password_hash=f"oauth_firebase_{secrets.token_hex(16)}",
                 role=role,
-                is_active=True,
+                is_active=False,
                 last_login=None,
                 reset_token=otp_code,
-                reset_token_expiry=datetime.utcnow() + timedelta(minutes=15)
+                reset_token_expiry=datetime.utcnow() + timedelta(minutes=10)
             )
             db.add(user)
             db.commit()
             db.refresh(user)
 
             # Dispatch 6-digit OTP verification code to user's Gmail
-            background_tasks.add_task(send_verification_email, user.email, otp_code)
+            background_tasks.add_task(send_google_verification_email, user.email, otp_code, user.name)
 
             log_audit_event(
                 db=db,
@@ -222,11 +361,11 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
     if not payload.email or not payload.password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please provide a valid Firebase token or email and password"
+            detail="Please provide a valid Firebase token or email and password."
         )
 
     user = db.query(User).filter(User.email == payload.email.strip().lower()).first()
-    
+
     if not user:
         log_audit_event(
             db=db,
@@ -260,6 +399,21 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
+
+    # Check if account is still unverified
+    if not getattr(user, 'is_active', True) and not user.last_login:
+        otp_code = generate_and_save_otp(db=db, email=user.email, purpose="signup", expiry_minutes=10)
+        user.reset_token = otp_code
+        user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
+        db.commit()
+        background_tasks.add_task(send_signup_verification_code, user.email, otp_code, user.name)
+        return {
+            "success": True,
+            "requires_verification": True,
+            "email": user.email,
+            "name": user.name,
+            "message": f"Your account requires email verification. A 6-digit code has been sent to {user.email}."
+        }
 
     if not getattr(user, 'is_active', True):
         log_audit_event(
@@ -298,6 +452,11 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
         "user": user
     }
 
+
+# -------------------------------------------------------------------------
+# 3. GOOGLE SIGNUP OTP VERIFICATION
+# -------------------------------------------------------------------------
+
 @router.post("/google", response_model=TokenResponse)
 def google_auth(payload: GoogleLoginRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
@@ -306,11 +465,12 @@ def google_auth(payload: GoogleLoginRequest, request: Request, background_tasks:
     login_req = LoginRequest(token=payload.credential)
     return login(login_req, request, background_tasks, db)
 
+
 @router.post("/google/verify", response_model=TokenResponse)
 def verify_google_signup_code(payload: VerifyCodeRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
     Verifies 6-digit OTP code sent to user's Google Gmail address upon initial signup,
-    activates account, issues JWT token, and sends Welcome Email.
+    activates account, sends Welcome Email, and issues JWT token.
     """
     email = payload.email.strip().lower()
     code = payload.code.strip()
@@ -328,35 +488,26 @@ def verify_google_signup_code(payload: VerifyCodeRequest, request: Request, back
             detail="User account not found."
         )
 
-    if not user.reset_token or user.reset_token != code:
-        log_audit_event(
-            db=db,
-            action="GOOGLE_OTP_VERIFY_FAILED",
-            module="Authentication",
-            description=f"Invalid OTP verification attempt for Google user {user.email}",
-            user=user,
-            record_id=str(user.id),
-            request=request
-        )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid verification code. Please check your Gmail and enter the 6-digit code."
-        )
+    is_valid, err_msg = verify_otp(db=db, email=email, code=code, purpose="google_signup")
+    if not is_valid:
+        # Fallback to user.reset_token
+        if user.reset_token and user.reset_token == code and (not user.reset_token_expiry or user.reset_token_expiry > datetime.utcnow()):
+            is_valid = True
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=err_msg
+            )
 
-    if user.reset_token_expiry and user.reset_token_expiry < datetime.utcnow():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verification code has expired. Please click 'Resend Code' to receive a new one."
-        )
-
-    # Verification successful: clear OTP code and activate login timestamp
+    # Activate user
+    user.is_active = True
     user.reset_token = None
     user.reset_token_expiry = None
     user.last_login = datetime.utcnow()
     db.commit()
     db.refresh(user)
 
-    # Dispatch Welcome Email to user's verified Gmail
+    # Dispatch Welcome Email
     background_tasks.add_task(send_welcome_email, user.email, user.name, user.role)
 
     log_audit_event(
@@ -378,10 +529,11 @@ def verify_google_signup_code(payload: VerifyCodeRequest, request: Request, back
         "user": user
     }
 
+
 @router.post("/google/resend-code", response_model=SimpleMessageResponse)
 def resend_google_signup_code(payload: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
-    Resends 6-digit OTP code to user's Google Gmail address.
+    Resends 6-digit OTP code to user's Google Gmail address with rate limit.
     """
     email = payload.email.strip().lower()
     user = db.query(User).filter(User.email == email).first()
@@ -391,71 +543,66 @@ def resend_google_signup_code(payload: ForgotPasswordRequest, request: Request, 
             detail="User account not found."
         )
 
-    # Generate fresh 6-digit OTP code
-    otp_code = f"{secrets.randbelow(900000) + 100000}"
+    allowed, cooldown = can_resend_otp(db=db, email=email, purpose="google_signup", cooldown_seconds=60)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Please wait {cooldown} seconds before requesting a new code."
+        )
+
+    otp_code = generate_and_save_otp(db=db, email=email, purpose="google_signup", expiry_minutes=10)
     user.reset_token = otp_code
-    user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=15)
+    user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
     db.commit()
 
-    background_tasks.add_task(send_verification_email, user.email, otp_code)
+    background_tasks.add_task(send_google_verification_email, user.email, otp_code, user.name)
 
     return {
         "success": True,
         "message": f"A fresh 6-digit verification code has been dispatched to {user.email}."
     }
 
+
+# -------------------------------------------------------------------------
+# 4. FORGOT PASSWORD & PASSWORD RESET FLOW
+# -------------------------------------------------------------------------
+
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
-def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
+def forgot_password(payload: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
-    Generate a 6-digit numeric verification code for email verification.
+    Step 1 of Forgot Password Flow:
+    Generates a secure 6-digit OTP for purpose='forgot_password' and dispatches it
+    to the user's registered email address.
     """
-    email = payload.email.lower()
+    email = payload.email.strip().lower()
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
-        # Create user account for seamless onboarding/recovery
-        user_name = email.split('@')[0].capitalize()
-        user = User(
-            name=user_name,
-            email=email,
-            password_hash=get_password_hash(secrets.token_urlsafe(16)),
-            role="Staff",
-            is_active=True
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account associated with this email address. Please check your email or sign up."
         )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
 
-    # Generate secure 6-digit numeric verification code (100000 - 999999)
-    code = f"{secrets.randbelow(900000) + 100000}"
-    user.reset_token = code
-    user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=15)
+    allowed, cooldown = can_resend_otp(db=db, email=email, purpose="forgot_password", cooldown_seconds=60)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Please wait {cooldown} seconds before requesting a new verification code."
+        )
+
+    otp_code = generate_and_save_otp(db=db, email=email, purpose="forgot_password", expiry_minutes=10)
+    user.reset_token = otp_code
+    user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
     db.commit()
 
-
-    # Dispatch email to user's inbox
-    email_sent = send_verification_email(to_email=user.email, code=code)
-
-    if not email_sent:
-        log_audit_event(
-            db=db,
-            action="VERIFICATION_EMAIL_FAILED",
-            module="Authentication",
-            description=f"Failed to dispatch 6-digit verification code to email: {user.email}",
-            user=user,
-            record_id=str(user.id),
-            request=request
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Unable to send verification code email. Please check your SMTP mail server configuration."
-        )
+    # Dispatch email asynchronously to user's registered inbox
+    background_tasks.add_task(send_forgot_password_code, user.email, otp_code, user.name)
 
     log_audit_event(
         db=db,
-        action="VERIFICATION_CODE_SENT_EMAIL",
+        action="FORGOT_PASSWORD_REQUESTED",
         module="Authentication",
-        description=f"6-digit verification code sent to email: {user.email} (Email Sent: True)",
+        description=f"6-digit password reset code sent to {user.email}",
         user=user,
         record_id=str(user.id),
         request=request
@@ -463,18 +610,19 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
 
     return {
         "success": True,
-        "message": f"A 6-digit verification code has been sent to {user.email}. Please check your email inbox (including Spam/Updates).",
+        "message": f"A 6-digit verification code has been sent to {user.email}. Please check your email inbox.",
         "email_sent": True
     }
-
 
 
 @router.post("/verify-code", response_model=SimpleMessageResponse)
 def verify_code(payload: VerifyCodeRequest, request: Request, db: Session = Depends(get_db)):
     """
-    Verify the 6-digit email verification code.
+    Step 2 of Forgot Password Flow:
+    Verifies that the entered 6-digit code is valid for purpose='forgot_password'.
+    (Does not consume the code yet so that /reset-password can safely update the password).
     """
-    email = payload.email.lower()
+    email = payload.email.strip().lower()
     code = payload.code.strip()
 
     if not code or len(code) != 6:
@@ -490,30 +638,57 @@ def verify_code(payload: VerifyCodeRequest, request: Request, db: Session = Depe
             detail="No account associated with this email."
         )
 
-    if not user.reset_token or user.reset_token != code:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid verification code. Please check and try again."
-        )
+    from app.models.verification_code import VerificationCode
+    record = db.query(VerificationCode).filter(
+        VerificationCode.email == email,
+        VerificationCode.purpose == "forgot_password",
+        VerificationCode.used == False
+    ).order_by(VerificationCode.id.desc()).first()
 
-    if user.reset_token_expiry and user.reset_token_expiry < datetime.utcnow():
-        user.reset_token = None
-        user.reset_token_expiry = None
-        db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verification code has expired (valid for 15 minutes). Please request a new code."
-        )
+    if record:
+        if datetime.utcnow() > record.expires_at:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification code has expired. Please request a new code."
+            )
+        if record.attempts >= 5:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Too many failed attempts. Please request a new code."
+            )
+        target_hash = VerificationCode.hash_code(code, email, "forgot_password")
+        if record.code_hash != target_hash and (not record.code_plain or record.code_plain != code):
+            record.attempts += 1
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid verification code. Please check and try again."
+            )
+    else:
+        # Fallback to user.reset_token
+        if not user.reset_token or user.reset_token != code:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid verification code. Please check and try again."
+            )
+        if user.reset_token_expiry and user.reset_token_expiry < datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification code has expired. Please request a new code."
+            )
 
     return {
         "success": True,
         "message": "Verification code verified successfully."
     }
 
+
 @router.post("/reset-password", response_model=SimpleMessageResponse)
 def reset_password(payload: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
     """
-    Reset password using verified 6-digit code or token.
+    Step 3 of Forgot Password Flow:
+    Verifies code for purpose='forgot_password', invalidates the code,
+    and updates the user's password with a secure bcrypt hash.
     """
     if len(payload.new_password) < 6:
         raise HTTPException(
@@ -528,10 +703,14 @@ def reset_password(payload: ResetPasswordRequest, request: Request, db: Session 
             detail="Verification code is required."
         )
 
-    if payload.email:
-        user = db.query(User).filter(User.email == payload.email.lower()).first()
-    else:
-        user = db.query(User).filter(User.reset_token == code_val).first()
+    if not payload.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email address is required."
+        )
+
+    email = payload.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
 
     if not user:
         raise HTTPException(
@@ -539,20 +718,17 @@ def reset_password(payload: ResetPasswordRequest, request: Request, db: Session 
             detail="Invalid request or account not found."
         )
 
-    if not user.reset_token or user.reset_token != code_val:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid verification code. Please verify your code again."
-        )
-
-    if user.reset_token_expiry and user.reset_token_expiry < datetime.utcnow():
-        user.reset_token = None
-        user.reset_token_expiry = None
-        db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verification code has expired. Please request a new code."
-        )
+    # Verify and consume OTP for purpose='forgot_password'
+    is_valid, err_msg = verify_otp(db=db, email=email, code=code_val, purpose="forgot_password")
+    if not is_valid:
+        # Fallback to user.reset_token
+        if user.reset_token and user.reset_token == code_val and (not user.reset_token_expiry or user.reset_token_expiry > datetime.utcnow()):
+            is_valid = True
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=err_msg
+            )
 
     user.password_hash = get_password_hash(payload.new_password)
     user.reset_token = None
@@ -564,21 +740,26 @@ def reset_password(payload: ResetPasswordRequest, request: Request, db: Session 
         db=db,
         action="PASSWORD_RESET_SUCCESS",
         module="Authentication",
-        description=f"Password updated successfully with 6-digit code for user: {user.email}",
+        description=f"Password updated successfully for user: {user.email}",
         user=user,
         record_id=str(user.id),
         request=request
     )
 
     return {
-        "message": "Your password has been successfully updated! You can now sign in with your new password.",
+        "message": "Password reset successfully. You can now sign in with your new password.",
         "success": True
     }
 
 
+# -------------------------------------------------------------------------
+# 5. USER PROFILE & ADMIN MANAGEMENT
+# -------------------------------------------------------------------------
+
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
 
 @router.get("/users", response_model=list[UserResponse])
 def list_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):

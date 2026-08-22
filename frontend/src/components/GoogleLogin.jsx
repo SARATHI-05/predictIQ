@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { Mail, CheckCircle2, AlertCircle, ArrowRight, RotateCw, X } from 'lucide-react';
 import { auth, googleProvider } from '../firebase';
 import { useAuth } from '../context/AuthContext';
@@ -33,18 +33,78 @@ const GoogleLogin = ({ onError, onSuccess, buttonText = 'Continue with Google' }
     return () => clearInterval(timer);
   }, [resendTimer]);
 
+  // Process Mobile Google Sign-In Redirect Results on page load
+  useEffect(() => {
+    let isMounted = true;
+
+    const processRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user && isMounted) {
+          setLoading(true);
+          setStatusMessage('Connecting with PredictIQ Cloud...');
+          if (onError) onError('');
+
+          const firebaseUser = result.user;
+          const idToken = await firebaseUser.getIdToken();
+          const backendResult = await loginWithGoogle(idToken, firebaseUser);
+
+          if (!isMounted) return;
+
+          if (backendResult.requiresVerification) {
+            setVerifyEmail(backendResult.email || firebaseUser.email);
+            setVerifyName(backendResult.name || firebaseUser.displayName || 'Google User');
+            setVerifySuccessMsg(backendResult.message || `A 6-digit verification code has been sent to ${backendResult.email}`);
+            setResendTimer(60);
+            setShowVerifyModal(true);
+            return;
+          }
+
+          if (backendResult.success) {
+            if (onSuccess) onSuccess(backendResult.user);
+            navigate('/dashboard');
+          } else {
+            const err = backendResult.error || 'Backend verification failed. Please try again.';
+            if (onError) onError(err);
+          }
+        }
+      } catch (redirectErr) {
+        console.error('Google Sign-In Redirect error:', redirectErr);
+        if (isMounted && onError) {
+          onError(redirectErr.message || 'Google authentication failed after redirect.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          setStatusMessage('');
+        }
+      }
+    };
+
+    processRedirect();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setStatusMessage('Opening Google Sign-In...');
     if (onError) onError('');
 
     try {
-      // 1. Trigger Firebase Google Popup
+      // 1. Attempt Popup Sign-In first (Desktop & Mobile browsers supporting popups)
       let result;
       try {
         result = await signInWithPopup(auth, googleProvider);
       } catch (popupErr) {
-        if (popupErr.code === 'auth/popup-blocked') {
+        // Fall back to Redirect on popup blockers or mobile webviews
+        if (
+          popupErr.code === 'auth/popup-blocked' ||
+          popupErr.code === 'auth/cancelled-popup-request' ||
+          popupErr.code === 'auth/popup-closed-by-user'
+        ) {
           setStatusMessage('Redirecting to Google Sign-In...');
           await signInWithRedirect(auth, googleProvider);
           return;
@@ -58,7 +118,7 @@ const GoogleLogin = ({ onError, onSuccess, buttonText = 'Continue with Google' }
       // 2. Obtain secure Firebase ID token
       const idToken = await firebaseUser.getIdToken();
 
-      // 3. Send token to backend to sync SQL database
+      // 3. Send token to Render backend to sync SQL database
       const backendResult = await loginWithGoogle(idToken, firebaseUser);
 
       // 4. Check if first-time user requires 6-digit OTP verification

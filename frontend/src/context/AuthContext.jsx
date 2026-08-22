@@ -36,14 +36,24 @@ export const AuthProvider = ({ children }) => {
 
           // Sync with Backend SQL database
           const response = await api.post('/api/auth/login', { token: idToken });
+          
+          // If the backend indicates the account requires 6-digit OTP verification, skip auto-login state overwrite
+          if (response.data?.requires_verification) {
+            console.log('[Auth] Google signup pending 6-digit OTP verification for:', response.data.email);
+            setLoading(false);
+            return;
+          }
+
           const { access_token, user: userData } = response.data;
 
-          const authToken = access_token || idToken;
-          localStorage.setItem('predictiq_token', authToken);
-          localStorage.setItem('predictiq_user', JSON.stringify(userData));
+          if (access_token && userData) {
+            const authToken = access_token || idToken;
+            localStorage.setItem('predictiq_token', authToken);
+            localStorage.setItem('predictiq_user', JSON.stringify(userData));
 
-          setToken(authToken);
-          setUser(userData);
+            setToken(authToken);
+            setUser(userData);
+          }
         } catch (error) {
           console.warn('Backend sync onAuthStateChanged notice:', error);
           if (!savedUser && currentFirebaseUser) {
@@ -71,6 +81,25 @@ export const AuthProvider = ({ children }) => {
 
     return () => unsubscribe();
   }, []);
+
+  // Helper to extract clean error message from API responses
+  const extractErrorMessage = (error, defaultMsg = 'Authentication failed.') => {
+    if (error.response?.data?.detail) {
+      return typeof error.response.data.detail === 'string'
+        ? error.response.data.detail
+        : JSON.stringify(error.response.data.detail);
+    }
+    if (error.response?.data?.message) {
+      return error.response.data.message;
+    }
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      return 'Connection timed out. The backend server on Render may be waking up from sleep. Please try again in a moment.';
+    }
+    if (error.code === 'ERR_NETWORK' || !error.response) {
+      return 'Cannot connect to backend server. Please verify backend is running on Render.';
+    }
+    return error.message || defaultMsg;
+  };
 
   // Google Sign-In with Firebase ID Token
   const loginWithGoogle = async (idToken, currentFirebaseUser) => {
@@ -101,7 +130,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: userData };
     } catch (error) {
       console.error('Google login error:', error);
-      const message = error.response?.data?.detail || (error.code === 'ERR_NETWORK' ? 'Cannot connect to backend server. Please ensure backend is running.' : 'Google authentication failed.');
+      const message = extractErrorMessage(error, 'Google authentication failed.');
       return { success: false, error: message };
     }
   };
@@ -119,7 +148,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true, user: userData };
     } catch (error) {
-      const message = error.response?.data?.detail || 'Invalid or expired verification code';
+      const message = extractErrorMessage(error, 'Invalid or expired verification code');
       return { success: false, error: message };
     }
   };
@@ -130,7 +159,7 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/api/auth/google/resend-code', { email });
       return { success: true, data: response.data };
     } catch (error) {
-      const message = error.response?.data?.detail || 'Failed to resend verification code';
+      const message = extractErrorMessage(error, 'Failed to resend verification code');
       return { success: false, error: message };
     }
   };
@@ -148,15 +177,47 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true, user: userData };
     } catch (error) {
-      const message = error.response?.data?.detail || (error.code === 'ERR_NETWORK' ? 'Cannot connect to backend server. Please verify backend is running.' : 'Invalid email or password');
+      const message = extractErrorMessage(error, 'Invalid email or password');
       return { success: false, error: message };
     }
   };
 
-  // Register New User
+  // Register New User (Initiates Signup & OTP Dispatch)
   const register = async (name, email, password, role = 'Staff') => {
     try {
       const response = await api.post('/api/auth/register', { name, email, password, role });
+      
+      // If verification is required (standard behavior)
+      if (response.data?.requires_verification) {
+        return {
+          success: true,
+          requiresVerification: true,
+          email: response.data.email || email,
+          name: response.data.name || name,
+          message: response.data.message
+        };
+      }
+
+      const { access_token, user: userData } = response.data;
+      if (access_token && userData) {
+        localStorage.setItem('predictiq_token', access_token);
+        localStorage.setItem('predictiq_user', JSON.stringify(userData));
+        setToken(access_token);
+        setUser(userData);
+        return { success: true, requiresVerification: false, user: userData };
+      }
+
+      return { success: true, requiresVerification: true, email };
+    } catch (error) {
+      const message = extractErrorMessage(error, 'Registration failed. Please try again.');
+      return { success: false, error: message };
+    }
+  };
+
+  // Verify 6-digit Signup OTP Code
+  const verifySignupOtp = async (email, code) => {
+    try {
+      const response = await api.post('/api/auth/register/verify', { email, code });
       const { access_token, user: userData } = response.data;
 
       localStorage.setItem('predictiq_token', access_token);
@@ -166,7 +227,18 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true, user: userData };
     } catch (error) {
-      const message = error.response?.data?.detail || 'Registration failed. Please try again.';
+      const message = extractErrorMessage(error, 'Invalid or expired verification code');
+      return { success: false, error: message };
+    }
+  };
+
+  // Resend 6-digit Signup OTP Code
+  const resendSignupOtp = async (email) => {
+    try {
+      const response = await api.post('/api/auth/register/resend-code', { email });
+      return { success: true, data: response.data };
+    } catch (error) {
+      const message = extractErrorMessage(error, 'Failed to resend verification code');
       return { success: false, error: message };
     }
   };
@@ -249,6 +321,8 @@ export const AuthProvider = ({ children }) => {
         resendGoogleOtp,
         login,
         register,
+        verifySignupOtp,
+        resendSignupOtp,
         logout,
         forgotPassword,
         verifyResetCode,

@@ -19,6 +19,7 @@ from app.models.dataset_log import DatasetLog
 from app.models.inventory import InventoryItem, InventoryTransaction
 from app.models.notification import Notification
 from app.models.audit_log import AuditLog
+from app.models.verification_code import VerificationCode
 from app.utils.auth import get_password_hash
 
 # ML imports

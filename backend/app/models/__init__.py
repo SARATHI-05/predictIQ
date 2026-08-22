@@ -9,6 +9,7 @@ from app.models.audit_log import AuditLog
 from app.models.inventory import InventoryItem, InventoryTransaction
 from app.models.notification import Notification
 from app.models.prediction_accuracy import PredictionAccuracy
+from app.models.verification_code import VerificationCode
 
 __all__ = [
     "User",
@@ -23,5 +24,6 @@ __all__ = [
     "InventoryItem",
     "InventoryTransaction",
     "Notification",
-    "PredictionAccuracy"
+    "PredictionAccuracy",
+    "VerificationCode"
 ]
