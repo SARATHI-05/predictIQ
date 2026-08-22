@@ -1,4 +1,5 @@
 import os
+import ssl
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -7,16 +8,16 @@ from dotenv import load_dotenv
 def send_verification_email(to_email: str, code: str) -> bool:
     """
     Sends a 6-digit verification code to the recipient's email address via SMTP.
-    Configurable via environment variables (e.g. Gmail SMTP, Outlook, SendGrid, etc.)
+    Supports dual-protocol delivery (Port 465 SSL and Port 587 STARTTLS).
     """
     # Dynamically reload .env to ensure fresh credentials
     load_dotenv(override=True)
 
-    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER", "").strip()
-    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip().replace(" ", "")
-    from_email = os.getenv("EMAILS_FROM_EMAIL", smtp_user or "support@predictiq.com").strip()
+    smtp_host = (os.getenv("SMTP_HOST") or "smtp.gmail.com").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "465"))
+    smtp_user = (os.getenv("SMTP_USER") or "predictiqfoodmanagement@gmail.com").strip()
+    smtp_pass = (os.getenv("SMTP_PASSWORD") or "slfr ywbj lulq zzuy").strip().replace(" ", "")
+    from_email = (os.getenv("EMAILS_FROM_EMAIL") or smtp_user).strip()
 
     subject = f"{code} is your PredictIQ verification code"
 
@@ -69,26 +70,28 @@ This code expires in 15 minutes. If you did not request this password reset, ple
     msg.attach(MIMEText(text_content, "plain"))
     msg.attach(MIMEText(html_content, "html"))
 
-    if not smtp_user or not smtp_pass:
-        print("\n" + "="*70)
-        print(f"[PREDICTIQ EMAIL DISPATCH - CONSOLE FALLBACK]")
-        print(f"Recipient: {to_email}")
-        print(f"Verification Code: {code}")
-        print(f"Subject: {subject}")
-        print(f"Note: To deliver real emails to actual Gmail inboxes, set")
-        print(f"      SMTP_USER and SMTP_PASSWORD in your .env file.")
-        print("="*70 + "\n")
-        return False
-
+    # Attempt 1: Direct SSL on Port 465 (Most reliable for cloud environments)
     try:
-        print(f"[Email Service] Connecting to {smtp_host}:{smtp_port} as {smtp_user}...")
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+        print(f"[Email Service] Attempting delivery to {to_email} via SSL ({smtp_host}:465)...")
+        ssl_ctx = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_host, 465, context=ssl_ctx, timeout=12) as server:
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(from_email, [to_email], msg.as_string())
+            print(f"[Email Service SUCCESS] Verification code {code} delivered to {to_email} via SSL 465!")
+            return True
+    except Exception as ssl_err:
+        print(f"[Email Service NOTICE] SSL 465 attempt failed: {ssl_err}. Trying STARTTLS on 587...")
+
+    # Attempt 2: STARTTLS on Port 587 (Fallback)
+    try:
+        print(f"[Email Service] Attempting delivery to {to_email} via STARTTLS ({smtp_host}:587)...")
+        with smtplib.SMTP(smtp_host, 587, timeout=12) as server:
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.sendmail(from_email, [to_email], msg.as_string())
-            print(f"[Email Service SUCCESS] Verification code {code} successfully delivered to {to_email}!")
+            print(f"[Email Service SUCCESS] Verification code {code} delivered to {to_email} via STARTTLS 587!")
             return True
-    except Exception as e:
-        print(f"[Email Service ERROR] Failed to send email to {to_email}: {e}")
-        return False
+    except Exception as tls_err:
+        print(f"[Email Service ERROR] Both SSL 465 and STARTTLS 587 delivery failed for {to_email}: {tls_err}")
 
+    return False
