@@ -6,11 +6,19 @@ Interactive Swagger Docs: `http://127.0.0.1:8000/docs`
 
 ---
 
-## 1. Authentication Endpoints
+## 1. Authentication & OTP Verification Endpoints
 | Method | Endpoint | Description | Access |
 |:---|:---|:---|:---|
-| `POST` | `/auth/register` | Register new user account | Public |
-| `POST` | `/auth/login` | Login and obtain JWT bearer token | Public |
+| `POST` | `/auth/register` | Initiate registration, generate 6-digit OTP, dispatch verification email | Public |
+| `POST` | `/auth/register/verify` | Verify 6-digit signup OTP, activate user, dispatch Welcome Email, issue JWT | Public |
+| `POST` | `/auth/register/resend-code` | Resend signup verification OTP (60s cooldown rate limit) | Public |
+| `POST` | `/auth/login` | Unified login (Email/Password or Firebase ID Token) | Public |
+| `POST` | `/auth/google` | Alias for Google/Firebase authentication | Public |
+| `POST` | `/auth/google/verify` | Verify 6-digit OTP for initial Google signup onboarding | Public |
+| `POST` | `/auth/google/resend-code` | Resend Google signup verification OTP (60s cooldown) | Public |
+| `POST` | `/auth/forgot-password` | Generate 6-digit password reset OTP, dispatch email | Public |
+| `POST` | `/auth/verify-code` | Verify 6-digit password reset OTP | Public |
+| `POST` | `/auth/reset-password` | Set new password with bcrypt hash, invalidate reset OTP | Public |
 | `GET` | `/auth/me` | Fetch authenticated user profile | Authenticated |
 | `GET` | `/auth/users` | List all system users | Admin |
 
