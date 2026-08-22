@@ -48,11 +48,14 @@ def get_smtp_config():
     }
 
 
+from email.utils import formatdate, make_msgid
+
 def _dispatch_email(to_email: str, subject: str, html_content: str, text_content: str) -> bool:
     """
     Unified SMTP dispatcher.
     Ensures that recipient is strictly the user's entered email address (to_email).
-    Attempts primary SSL on Port 465, then falls back to STARTTLS on Port 587.
+    Includes RFC 5322 deliverability headers (Date, Message-ID, Reply-To) to ensure
+    emails pass mobile spam filters directly into the Inbox.
     """
     if not to_email or not isinstance(to_email, str) or "@" not in to_email:
         print(f"[Email Service ERROR] Invalid recipient email address: '{to_email}'")
@@ -65,33 +68,41 @@ def _dispatch_email(to_email: str, subject: str, html_content: str, text_content
     msg["Subject"] = Header(subject, "utf-8")
     msg["From"] = f"{config['from_name']} <{config['from_email']}>"
     msg["To"] = recipient
+    msg["Date"] = formatdate(localtime=True)
+    msg["Message-ID"] = make_msgid(domain="gmail.com")
+    msg["Reply-To"] = config["from_email"]
+    msg["X-Mailer"] = "PredictIQ-Mailer/2.0"
 
     # Attach both plain text and rich HTML content
     msg.attach(MIMEText(text_content, "plain", "utf-8"))
     msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-    # Attempt 1: Direct SSL on Port 465 (Fastest and most reliable for cloud deployments)
-    try:
-        ssl_ctx = ssl.create_default_context()
-        with smtplib.SMTP_SSL(config["host"], 465, context=ssl_ctx, timeout=12) as server:
-            server.login(config["user"], config["password"])
-            server.send_message(msg, from_addr=config["from_email"], to_addrs=[recipient])
-            print(f"[Email Service SUCCESS] '{subject}' delivered to {recipient} via SSL 465!")
-            return True
-    except Exception as ssl_err:
-        print(f"[Email Service NOTICE] SSL 465 attempt for {recipient} notice: {ssl_err}. Trying STARTTLS 587...")
+    # Determine attempt order based on configured port
+    ports_to_try = [config["port"]]
+    fallback_port = 465 if config["port"] == 587 else 587
+    if fallback_port not in ports_to_try:
+        ports_to_try.append(fallback_port)
 
-    # Attempt 2: STARTTLS on Port 587 (Fallback)
-    try:
-        with smtplib.SMTP(config["host"], 587, timeout=12) as server:
-            server.starttls()
-            server.login(config["user"], config["password"])
-            server.send_message(msg, from_addr=config["from_email"], to_addrs=[recipient])
-            print(f"[Email Service SUCCESS] '{subject}' delivered to {recipient} via STARTTLS 587!")
-            return True
-    except Exception as tls_err:
-        print(f"[Email Service ERROR] Both SSL 465 and STARTTLS 587 failed for {recipient}: {tls_err}")
+    for port in ports_to_try:
+        try:
+            if port == 465:
+                ssl_ctx = ssl.create_default_context()
+                with smtplib.SMTP_SSL(config["host"], 465, context=ssl_ctx, timeout=12) as server:
+                    server.login(config["user"], config["password"])
+                    server.send_message(msg, from_addr=config["from_email"], to_addrs=[recipient])
+                    print(f"[Email Service SUCCESS] '{subject}' delivered to {recipient} via SSL 465!")
+                    return True
+            else:
+                with smtplib.SMTP(config["host"], 587, timeout=12) as server:
+                    server.starttls()
+                    server.login(config["user"], config["password"])
+                    server.send_message(msg, from_addr=config["from_email"], to_addrs=[recipient])
+                    print(f"[Email Service SUCCESS] '{subject}' delivered to {recipient} via STARTTLS 587!")
+                    return True
+        except Exception as err:
+            print(f"[Email Service NOTICE] Attempt on port {port} for {recipient} failed: {err}")
 
+    print(f"[Email Service ERROR] All delivery attempts failed for {recipient}")
     return False
 
 
