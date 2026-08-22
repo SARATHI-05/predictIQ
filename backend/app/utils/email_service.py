@@ -9,14 +9,13 @@ def send_verification_email(to_email: str, code: str) -> bool:
     Sends a 6-digit verification code to the recipient's email address via SMTP.
     Configurable via environment variables (e.g. Gmail SMTP, Outlook, SendGrid, etc.)
     """
-    # Dynamically reload .env to ensure fresh credentials
     load_dotenv(override=True)
 
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER", "").strip()
     smtp_pass = os.getenv("SMTP_PASSWORD", "").strip().replace(" ", "")
-    from_email = os.getenv("EMAILS_FROM_EMAIL", smtp_user or "support@predictiq.com").strip()
+    from_email = os.getenv("EMAILS_FROM_EMAIL", smtp_user or "predictiqfoodmanagement@gmail.com").strip()
 
     subject = f"{code} is your PredictIQ verification code"
 
@@ -92,3 +91,113 @@ This code expires in 15 minutes. If you did not request this password reset, ple
         print(f"[Email Service ERROR] Failed to send email to {to_email}: {e}")
         return False
 
+
+def send_welcome_email(to_email: str, user_name: str = "") -> bool:
+    """
+    Sends a "Signup Successful" welcome email to the newly registered user.
+    """
+    load_dotenv(override=True)
+
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip().replace(" ", "")
+    from_email = os.getenv("EMAILS_FROM_EMAIL", smtp_user or "predictiqfoodmanagement@gmail.com").strip()
+
+    subject = "Welcome to PredictIQ – Signup Successful!"
+    display_name = user_name or (to_email.split("@")[0].capitalize() if to_email else "User")
+
+    # Plain text format matching user requirement exactly
+    text_content = f"""Hi {display_name},
+
+Welcome to PredictIQ!
+
+Your account has been successfully created. You can now sign in and start using PredictIQ to manage food records, analyze demand, view predictions, and reduce food wastage.
+
+Account Email: {to_email}
+
+Thank you for joining PredictIQ!
+
+Best regards,
+PredictIQ Team.
+"""
+
+    # Rich HTML Email Template
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0B0F17; color: #E2E8F0; margin: 0; padding: 20px; }}
+        .container {{ max-width: 540px; margin: 0 auto; background: #131B2A; border: 1px solid #1E293B; border-radius: 16px; padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
+        .logo {{ font-size: 24px; font-weight: 800; color: #FFFFFF; margin-bottom: 8px; text-align: center; }}
+        .accent {{ color: #10B981; }}
+        .subtitle {{ font-size: 13px; color: #94A3B8; margin-bottom: 24px; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; }}
+        .card {{ background: #0B1120; border: 1px solid #1E293B; border-radius: 12px; padding: 18px; margin: 20px 0; }}
+        .account-email {{ font-family: monospace; font-size: 14px; color: #38BDF8; font-weight: 600; }}
+        .footer {{ margin-top: 30px; font-size: 12px; color: #64748B; border-top: 1px solid #1E293B; padding-top: 16px; text-align: center; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="logo">Predict<span class="accent">IQ</span></div>
+        <div class="subtitle">AI-Based Food Demand & Resource Planning</div>
+        
+        <p style="font-size: 16px; color: #F1F5F9; font-weight: 600; margin-bottom: 12px;">Hi {display_name},</p>
+        <p style="font-size: 15px; color: #34D399; font-weight: 700; margin-bottom: 12px;">Welcome to PredictIQ!</p>
+        
+        <p style="font-size: 14px; color: #CBD5E1; line-height: 1.6; margin-bottom: 16px;">
+          Your account has been successfully created. You can now sign in and start using PredictIQ to manage food records, analyze demand, view predictions, and reduce food wastage.
+        </p>
+        
+        <div class="card">
+          <div style="font-size: 12px; color: #94A3B8; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Account Email:</div>
+          <span class="account-email">{to_email}</span>
+        </div>
+        
+        <p style="font-size: 14px; color: #CBD5E1; margin-bottom: 20px;">
+          Thank you for joining PredictIQ!
+        </p>
+        
+        <p style="font-size: 14px; color: #94A3B8; margin-top: 24px; line-height: 1.4;">
+          Best regards,<br>
+          <strong style="color: #F1F5F9;">PredictIQ Team.</strong>
+        </p>
+        
+        <div class="footer">
+          PredictIQ Automated Welcome Notification
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"PredictIQ Team <{from_email}>"
+    msg["To"] = to_email
+
+    msg.attach(MIMEText(text_content, "plain"))
+    msg.attach(MIMEText(html_content, "html"))
+
+    if not smtp_user or not smtp_pass:
+        print("\n" + "="*70)
+        print(f"[PREDICTIQ WELCOME EMAIL DISPATCH - CONSOLE FALLBACK]")
+        print(f"Recipient: {to_email}")
+        print(f"Subject: {subject}")
+        print(text_content)
+        print("="*70 + "\n")
+        return False
+
+    try:
+        print(f"[Email Service] Sending welcome email to {to_email} via {smtp_host}:{smtp_port}...")
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(from_email, [to_email], msg.as_string())
+            print(f"[Email Service SUCCESS] Welcome email delivered to {to_email}!")
+            return True
+    except Exception as e:
+        print(f"[Email Service ERROR] Failed to send welcome email to {to_email}: {e}")
+        return False

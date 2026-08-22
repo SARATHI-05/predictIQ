@@ -2,7 +2,7 @@ import os
 import secrets
 from datetime import datetime, timedelta
 import requests
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -30,7 +30,7 @@ from app.utils.auth import (
 )
 from app.utils.audit import log_audit_event
 from app.utils.firebase_auth import verify_firebase_id_token
-from app.utils.email_service import send_verification_email
+from app.utils.email_service import send_verification_email, send_welcome_email
 
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -38,7 +38,7 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
 @router.post("/register", response_model=TokenResponse)
-def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db)):
+def register(user_in: UserCreate, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     if len(user_in.password) < 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -79,6 +79,9 @@ def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db
         request=request
     )
 
+    # Send Welcome Email asynchronously via background tasks
+    background_tasks.add_task(send_welcome_email, new_user.email, new_user.name)
+
     token = create_access_token(data={"sub": new_user.email, "role": new_user.role, "name": new_user.name})
     return {
         "success": True,
@@ -89,7 +92,7 @@ def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db
     }
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
+def login(payload: LoginRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
     Unified Authentication Endpoint:
     1. If 'token' is provided -> Verifies Firebase Google ID Token and syncs SQL User.
@@ -178,6 +181,9 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
                 record_id=str(user.id),
                 request=request
             )
+
+            # Send Welcome Email asynchronously to the new Google user
+            background_tasks.add_task(send_welcome_email, user.email, user.name)
 
         jwt_token = create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
         return {
