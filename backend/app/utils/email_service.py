@@ -147,8 +147,8 @@ def send_welcome_email(to_email: str, user_name: str, role: str = "Staff") -> bo
           
           <p>You can now sign in to your PredictIQ account and start exploring the platform.</p>
           
-          <a href="https://predict-iq-seven.vercel.app/login" class="btn">
-            Sign In to PredictIQ
+          <a href="https://predict-iq-green.vercel.app/login" class="btn">
+            Login
           </a>
           
           <p>Thank you for choosing PredictIQ!</p>
@@ -173,7 +173,7 @@ Your account has been successfully created using this email address. We're excit
 With PredictIQ, you can manage food records, analyze consumption and wastage, and use AI-powered demand predictions to support better food planning and resource management.
 
 You can now sign in to your PredictIQ account and start exploring the platform:
-https://predict-iq-seven.vercel.app/login
+https://predict-iq-green.vercel.app/login
 
 Thank you for choosing PredictIQ!
 
