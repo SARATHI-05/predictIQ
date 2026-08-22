@@ -132,6 +132,17 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                     detail="Your account has been deactivated. Please contact your system administrator."
                 )
 
+            # If user has a pending verification code and has never logged in, require OTP verification
+            if user.reset_token and not user.last_login:
+                background_tasks.add_task(send_verification_email, user.email, user.reset_token)
+                return {
+                    "success": True,
+                    "requires_verification": True,
+                    "email": user.email,
+                    "name": user.name,
+                    "message": f"A 6-digit verification code has been sent to your Gmail ({user.email}). Please enter it to complete signup."
+                }
+
             # Update Firebase UID, avatar, and last login
             if uid and not user.firebase_uid:
                 user.firebase_uid = uid
@@ -153,9 +164,12 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                 request=request
             )
         else:
-            # Create new user in SQL database
+            # Create new user in SQL database with pending OTP verification
             user_count = db.query(User).count()
             role = "Admin" if ("admin" in email or token_str == "demo_google_admin" or user_count == 0) else "Staff"
+
+            # Generate 6-digit verification code
+            otp_code = f"{secrets.randbelow(900000) + 100000}"
 
             user = User(
                 name=name,
@@ -166,24 +180,34 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                 password_hash=f"oauth_firebase_{secrets.token_hex(16)}",
                 role=role,
                 is_active=True,
-                last_login=datetime.utcnow()
+                last_login=None,
+                reset_token=otp_code,
+                reset_token_expiry=datetime.utcnow() + timedelta(minutes=15)
             )
             db.add(user)
             db.commit()
             db.refresh(user)
 
-            # Dispatch Welcome Email to new Google Sign-In user
-            background_tasks.add_task(send_welcome_email, user.email, user.name, user.role)
+            # Dispatch 6-digit OTP verification code to user's Gmail
+            background_tasks.add_task(send_verification_email, user.email, otp_code)
 
             log_audit_event(
                 db=db,
-                action="USER_REGISTERED_FIREBASE",
+                action="GOOGLE_SIGNUP_OTP_INITIATED",
                 module="Authentication",
-                description=f"New user registered via Firebase Google Sign-In: {user.email} (Role: {user.role})",
+                description=f"Google signup initiated for {user.email}. Verification code sent to Gmail.",
                 user=user,
                 record_id=str(user.id),
                 request=request
             )
+
+            return {
+                "success": True,
+                "requires_verification": True,
+                "email": user.email,
+                "name": user.name,
+                "message": f"A 6-digit verification code has been sent to your Gmail ({user.email}). Please enter it to complete signup."
+            }
 
         jwt_token = create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
         return {
@@ -281,6 +305,104 @@ def google_auth(payload: GoogleLoginRequest, request: Request, background_tasks:
     """
     login_req = LoginRequest(token=payload.credential)
     return login(login_req, request, background_tasks, db)
+
+@router.post("/google/verify", response_model=TokenResponse)
+def verify_google_signup_code(payload: VerifyCodeRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """
+    Verifies 6-digit OTP code sent to user's Google Gmail address upon initial signup,
+    activates account, issues JWT token, and sends Welcome Email.
+    """
+    email = payload.email.strip().lower()
+    code = payload.code.strip()
+
+    if not code or len(code) != 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide a valid 6-digit verification code."
+        )
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User account not found."
+        )
+
+    if not user.reset_token or user.reset_token != code:
+        log_audit_event(
+            db=db,
+            action="GOOGLE_OTP_VERIFY_FAILED",
+            module="Authentication",
+            description=f"Invalid OTP verification attempt for Google user {user.email}",
+            user=user,
+            record_id=str(user.id),
+            request=request
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification code. Please check your Gmail and enter the 6-digit code."
+        )
+
+    if user.reset_token_expiry and user.reset_token_expiry < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification code has expired. Please click 'Resend Code' to receive a new one."
+        )
+
+    # Verification successful: clear OTP code and activate login timestamp
+    user.reset_token = None
+    user.reset_token_expiry = None
+    user.last_login = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+
+    # Dispatch Welcome Email to user's verified Gmail
+    background_tasks.add_task(send_welcome_email, user.email, user.name, user.role)
+
+    log_audit_event(
+        db=db,
+        action="GOOGLE_SIGNUP_VERIFIED_SUCCESS",
+        module="Authentication",
+        description=f"User {user.email} verified Google email and completed onboarding",
+        user=user,
+        record_id=str(user.id),
+        request=request
+    )
+
+    jwt_token = create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
+    return {
+        "success": True,
+        "message": "Google email verified successfully! Welcome to PredictIQ.",
+        "access_token": jwt_token,
+        "token_type": "bearer",
+        "user": user
+    }
+
+@router.post("/google/resend-code", response_model=SimpleMessageResponse)
+def resend_google_signup_code(payload: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """
+    Resends 6-digit OTP code to user's Google Gmail address.
+    """
+    email = payload.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User account not found."
+        )
+
+    # Generate fresh 6-digit OTP code
+    otp_code = f"{secrets.randbelow(900000) + 100000}"
+    user.reset_token = otp_code
+    user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=15)
+    db.commit()
+
+    background_tasks.add_task(send_verification_email, user.email, otp_code)
+
+    return {
+        "success": True,
+        "message": f"A fresh 6-digit verification code has been dispatched to {user.email}."
+    }
 
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
 def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):

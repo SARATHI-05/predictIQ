@@ -26,11 +26,14 @@ class UserResponse(UserBase):
         from_attributes = True
 
 class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    user: UserResponse
+    access_token: Optional[str] = None
+    token_type: Optional[str] = "bearer"
+    user: Optional[UserResponse] = None
     success: bool = True
     message: Optional[str] = "Login successful"
+    requires_verification: Optional[bool] = False
+    email: Optional[str] = None
+    name: Optional[str] = None
 
 class LoginRequest(BaseModel):
     token: Optional[str] = None  # Firebase ID token

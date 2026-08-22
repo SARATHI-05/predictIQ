@@ -76,8 +76,20 @@ export const AuthProvider = ({ children }) => {
   const loginWithGoogle = async (idToken, currentFirebaseUser) => {
     try {
       const response = await api.post('/api/auth/login', { token: idToken });
-      const { access_token, user: userData } = response.data;
+      
+      // Check if this is a first-time Google signup requiring 6-digit OTP verification
+      if (response.data?.requires_verification) {
+        if (currentFirebaseUser) setFirebaseUser(currentFirebaseUser);
+        return {
+          success: true,
+          requiresVerification: true,
+          email: response.data.email,
+          name: response.data.name,
+          message: response.data.message
+        };
+      }
 
+      const { access_token, user: userData } = response.data;
       const authToken = access_token || idToken;
       localStorage.setItem('predictiq_token', authToken);
       localStorage.setItem('predictiq_user', JSON.stringify(userData));
@@ -90,6 +102,35 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Google login error:', error);
       const message = error.response?.data?.detail || (error.code === 'ERR_NETWORK' ? 'Cannot connect to backend server. Please ensure backend is running.' : 'Google authentication failed.');
+      return { success: false, error: message };
+    }
+  };
+
+  // Verify 6-digit Google Signup OTP Code
+  const verifyGoogleOtp = async (email, code) => {
+    try {
+      const response = await api.post('/api/auth/google/verify', { email, code });
+      const { access_token, user: userData } = response.data;
+
+      localStorage.setItem('predictiq_token', access_token);
+      localStorage.setItem('predictiq_user', JSON.stringify(userData));
+
+      setToken(access_token);
+      setUser(userData);
+      return { success: true, user: userData };
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Invalid or expired verification code';
+      return { success: false, error: message };
+    }
+  };
+
+  // Resend 6-digit Google Signup OTP Code
+  const resendGoogleOtp = async (email) => {
+    try {
+      const response = await api.post('/api/auth/google/resend-code', { email });
+      return { success: true, data: response.data };
+    } catch (error) {
+      const message = error.response?.data?.detail || 'Failed to resend verification code';
       return { success: false, error: message };
     }
   };
@@ -204,6 +245,8 @@ export const AuthProvider = ({ children }) => {
         firebaseUser,
         loading,
         loginWithGoogle,
+        verifyGoogleOtp,
+        resendGoogleOtp,
         login,
         register,
         logout,
