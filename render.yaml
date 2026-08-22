@@ -17,6 +17,8 @@ services:
         value: juvpwwvyakldziwxltkm
       - key: SUPABASE_URL
         value: https://juvpwwvyakldziwxltkm.supabase.co
+      - key: SUPABASE_REST_URL
+        value: https://juvpwwvyakldziwxltkm.supabase.co/rest/v1
       - key: SUPABASE_ANON_KEY
         value: sb_publishable_GfETX2bGiMhMHcvYX5QIMg_pmsGlwg_
       - key: CORS_ORIGINS
