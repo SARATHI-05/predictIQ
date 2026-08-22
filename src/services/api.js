@@ -1,9 +1,42 @@
 import axios from 'axios';
 import { auth } from '../firebase';
 
-// Ensure baseURL handles VITE_API_URL correctly in production
-const rawApiUrl = import.meta.env.VITE_API_URL || '';
-const API_BASE_URL = rawApiUrl.replace(/\/+$/, '');
+// Dynamic API Base URL resolution
+export const getApiBaseUrl = () => {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+
+    // 1. Mobile / LAN Wi-Fi testing (e.g. 192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+    const isPrivateLan =
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+    if (isPrivateLan) {
+      // If VITE_API_URL is local (localhost / 127.0.0.1 or empty), use the current LAN host IP
+      if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+        return `http://${hostname}:8000`;
+      }
+      return envUrl;
+    }
+
+    // 2. Local PC testing
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return envUrl || 'http://127.0.0.1:8000';
+    }
+
+    // 3. Deployed production environments (Vercel, Render, etc.)
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+      return envUrl;
+    }
+  }
+
+  return envUrl;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -45,7 +78,26 @@ api.interceptors.request.use(
 
 // Response Interceptor: Token Refresh Retry & Structured Error Logging
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Check if a static SPA index.html was returned instead of JSON (common when backend is not deployed on CDN/Vercel)
+    if (
+      typeof response.data === 'string' &&
+      (response.data.trim().startsWith('<!doctype') || response.data.trim().startsWith('<html'))
+    ) {
+      const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+      const detailMsg = isVercel
+        ? 'Backend API not connected: The API request was redirected to the Vercel static frontend. Set VITE_API_URL in your Vercel Environment Variables to your live backend service.'
+        : 'Backend API returned HTML instead of JSON. Please ensure the FastAPI backend is running.';
+      
+      const customErr = new Error(detailMsg);
+      customErr.response = {
+        status: 503,
+        data: { detail: detailMsg }
+      };
+      return Promise.reject(customErr);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 

@@ -91,7 +91,13 @@ const Dashboard = () => {
       setActivities(actRes.data);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
-      setError('Unable to load live dashboard feed. Please check backend connection.');
+      const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+      const customMsg = err?.response?.data?.detail || err?.message || (
+        isVercel
+          ? 'Cannot connect to backend API from Vercel. Please ensure VITE_API_URL is configured in your Vercel Environment Variables.'
+          : 'Unable to load live dashboard feed. Please ensure the backend server is running on http://127.0.0.1:8000.'
+      );
+      setError(customMsg);
     } finally {
       setLoading(false);
     }
@@ -164,8 +170,8 @@ const Dashboard = () => {
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             Unable to load live dashboard feed
           </h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', maxWidth: '520px', margin: '0 auto 1.25rem', lineHeight: 1.5 }}>
-            Please check your network connection or verify that the backend API URL is configured correctly.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', maxWidth: '560px', margin: '0 auto 1.25rem', lineHeight: 1.5 }}>
+            {error}
           </p>
           <button onClick={fetchDashboardData} className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', margin: '0 auto' }}>
             <RefreshCw size={15} />

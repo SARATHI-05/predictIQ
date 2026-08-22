@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: predictiq-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir backend
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        value: predictiq-super-secret-production-key-2026
+      - key: FIREBASE_PROJECT_ID
+        value: predictiq-b5039
+      - key: CORS_ORIGINS
+        value: https://predict-iq-seven.vercel.app,http://localhost:5173

@@ -12,14 +12,15 @@ from app.models.inventory import InventoryItem
 from app.models.dataset_log import DatasetLog
 from app.models.model_metric import ModelMetric
 from app.models.user import User
+from typing import Optional
 from app.services.accuracy_service import get_accuracy_dashboard_metrics
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_user, get_optional_current_user
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
 @router.get("")
 @router.get("/overview")
-def get_dashboard_overview(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_dashboard_overview(db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_optional_current_user)):
     """
     Combined Dashboard Feed endpoint for mobile and web clients
     """
@@ -35,8 +36,7 @@ def get_dashboard_overview(db: Session = Depends(get_db), current_user: User = D
     }
 
 @router.get("/summary")
-
-def get_dashboard_summary(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_dashboard_summary(db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_optional_current_user)):
     """
     Feature 16: Enhanced KPI summary cards with:
     - Today's demand and prep numbers
@@ -149,7 +149,7 @@ def get_dashboard_summary(db: Session = Depends(get_db), current_user: User = De
     }
 
 @router.get("/trends")
-def get_dashboard_trends(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_dashboard_trends(db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_optional_current_user)):
     """Fetch structured time-series and category aggregation data for dashboard charts"""
     records = db.query(FoodRecord).order_by(FoodRecord.date.asc()).all()
     
@@ -205,7 +205,7 @@ def get_dashboard_trends(db: Session = Depends(get_db), current_user: User = Dep
     }
 
 @router.get("/recent-activities")
-def get_recent_activities(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_recent_activities(db: Session = Depends(get_db), current_user: Optional[User] = Depends(get_optional_current_user)):
     """Fetch latest activities across uploads, predictions, food records, and active alerts"""
     latest_uploads = db.query(DatasetLog).order_by(DatasetLog.id.desc()).limit(3).all()
     latest_predictions = db.query(Prediction).order_by(Prediction.id.desc()).limit(4).all()

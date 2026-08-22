@@ -17,8 +17,11 @@ const SystemHealthBadge = () => {
   const checkHealth = async () => {
     try {
       const res = await api.get('/api/health');
-      setHealth(res.data);
-
+      if (res.data && typeof res.data === 'object' && res.data.backend) {
+        setHealth(res.data);
+      } else {
+        throw new Error('Invalid health payload');
+      }
       setLastCheck(new Date());
     } catch {
       setHealth({
