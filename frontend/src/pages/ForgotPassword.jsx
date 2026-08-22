@@ -26,7 +26,6 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
-  const [codePreview, setCodePreview] = useState(null);
   const [resendTimer, setResendTimer] = useState(0);
 
   const { forgotPassword, verifyResetCode, resetPassword } = useAuth();
@@ -60,10 +59,7 @@ const ForgotPassword = () => {
     if (res.success) {
       setStep(2);
       setResendTimer(60);
-      if (res.data?.code_preview) {
-        setCodePreview(res.data.code_preview);
-      }
-      setInfoMsg(res.data?.message || `Verification code sent to ${email}`);
+      setInfoMsg(res.data?.message || `A 6-digit verification code has been sent to ${email}. Please check your inbox and spam folder.`);
     } else {
       setError(res.error);
     }
@@ -122,10 +118,7 @@ const ForgotPassword = () => {
     setLoading(false);
     if (res.success) {
       setResendTimer(60);
-      if (res.data?.code_preview) {
-        setCodePreview(res.data.code_preview);
-      }
-      setInfoMsg(`A fresh verification code has been dispatched to ${email}`);
+      setInfoMsg(`A fresh verification code has been dispatched to ${email}. Please check your inbox.`);
     } else {
       setError(res.error);
     }
@@ -300,34 +293,6 @@ const ForgotPassword = () => {
                 </div>
               </div>
             </div>
-
-            {codePreview && (
-              <div style={{
-                background: 'rgba(56, 189, 248, 0.1)',
-                border: '1px dashed rgba(56, 189, 248, 0.4)',
-                borderRadius: '0.75rem',
-                padding: '0.75rem 1rem',
-                marginBottom: '1.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.75rem', color: '#38BDF8', fontWeight: 600 }}>Offline / Direct Code:</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '2px', fontFamily: 'monospace' }}>
-                    {codePreview}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCode(codePreview)}
-                  className="btn btn-secondary"
-                  style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
-                >
-                  Auto-fill Code
-                </button>
-              </div>
-            )}
 
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label className="form-label" style={{ textAlign: 'center', display: 'block', marginBottom: '0.75rem' }}>

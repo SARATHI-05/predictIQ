@@ -327,8 +327,7 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
     return {
         "success": True,
         "message": f"A 6-digit verification code has been sent to {user.email}. Please check your email inbox (including Spam/Updates).",
-        "email_sent": email_sent,
-        "code_preview": code if not email_sent else None
+        "email_sent": email_sent
     }
 
 
