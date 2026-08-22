@@ -249,8 +249,15 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
     if token_str:
         user_info = verify_firebase_id_token(token_str)
         uid = user_info.get("uid")
-        email = user_info.get("email", "").lower()
-        name = user_info.get("name") or (email.split("@")[0].capitalize() if email else "Google User")
+        email = user_info.get("email", "").strip().lower()
+
+        if not email or "@" not in email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verified email not found in Google authentication token."
+            )
+
+        name = user_info.get("name") or email.split("@")[0].capitalize()
         avatar = user_info.get("picture")
 
         user = db.query(User).filter(
@@ -274,7 +281,12 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
 
             # If user has a pending verification code and has never completed onboarding
             if user.reset_token and not user.last_login:
-                background_tasks.add_task(send_google_verification_email, user.email, user.reset_token, user.name)
+                otp_code = generate_and_save_otp(db=db, email=user.email, purpose="google_signup", expiry_minutes=10)
+                user.reset_token = otp_code
+                user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
+                db.commit()
+
+                background_tasks.add_task(send_google_verification_email, user.email, otp_code, user.name)
                 return {
                     "success": True,
                     "requires_verification": True,
