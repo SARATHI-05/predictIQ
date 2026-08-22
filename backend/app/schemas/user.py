@@ -9,6 +9,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    code: Optional[str] = None  # 6-digit email verification code
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -30,7 +31,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
     success: bool = True
-    message: Optional[str] = "Login successful"
+    message: Optional[str] = "Operation successful"
 
 class LoginRequest(BaseModel):
     token: Optional[str] = None  # Firebase ID token
@@ -41,6 +42,13 @@ class LoginRequest(BaseModel):
 class GoogleLoginRequest(BaseModel):
     credential: str
 
+class SendSignupCodeRequest(BaseModel):
+    email: EmailStr
+
+class SendSignupCodeResponse(BaseModel):
+    success: bool = True
+    message: str
+    code_preview: Optional[str] = None
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
@@ -50,8 +58,6 @@ class ForgotPasswordResponse(BaseModel):
     success: bool = True
     email_sent: Optional[bool] = True
     code_preview: Optional[str] = None
-
-
 
 class VerifyCodeRequest(BaseModel):
     email: EmailStr
@@ -66,5 +72,3 @@ class ResetPasswordRequest(BaseModel):
 class SimpleMessageResponse(BaseModel):
     message: str
     success: bool = True
-
-

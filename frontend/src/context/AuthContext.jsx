@@ -112,10 +112,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register New User
-  const register = async (name, email, password, role = 'Staff') => {
+  // Register New User (with optional 6-digit verification code)
+  const register = async (name, email, password, role = 'Staff', code = null) => {
     try {
-      const response = await api.post('/api/auth/register', { name, email, password, role });
+      const payload = { name, email, password, role };
+      if (code) payload.code = code;
+      const response = await api.post('/api/auth/register', payload);
       const { access_token, user: userData } = response.data;
 
       localStorage.setItem('predictiq_token', access_token);
