@@ -13,5 +13,11 @@ services:
         value: predictiq-super-secret-production-key-2026
       - key: FIREBASE_PROJECT_ID
         value: predictiq-b5039
+      - key: SUPABASE_PROJECT_ID
+        value: juvpwwvyakldziwxltkm
+      - key: SUPABASE_URL
+        value: https://juvpwwvyakldziwxltkm.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: sb_publishable_GfETX2bGiMhMHcvYX5QIMg_pmsGlwg_
       - key: CORS_ORIGINS
         value: https://predict-iq-seven.vercel.app,http://localhost:5173

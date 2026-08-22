@@ -4,7 +4,7 @@ import time
 from typing import Optional
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://juvpwwvyakldziwxltkm.supabase.co")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", os.getenv("SUPABASE_ANON_KEY", ""))
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_ANON_KEY") or os.getenv("SUPABASE_PUBLISHABLE_KEY") or ""
 
 def upload_file_to_supabase_storage(bucket: str, file_name: str, file_content: bytes, content_type: str = "text/csv") -> str:
     """
@@ -19,8 +19,9 @@ def upload_file_to_supabase_storage(bucket: str, file_name: str, file_content: b
         headers = {
             "Content-Type": content_type,
         }
-        if SUPABASE_SERVICE_KEY:
-            headers["Authorization"] = f"Bearer {SUPABASE_SERVICE_KEY}"
+        if SUPABASE_KEY:
+            headers["Authorization"] = f"Bearer {SUPABASE_KEY}"
+            headers["apikey"] = SUPABASE_KEY
 
         res = requests.post(url, headers=headers, data=file_content, timeout=5)
         if res.status_code in [200, 201]:
