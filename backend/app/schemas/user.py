@@ -49,6 +49,7 @@ class ForgotPasswordResponse(BaseModel):
     message: str
     success: bool = True
     email_sent: Optional[bool] = True
+    code_preview: Optional[str] = None
 
 
 
