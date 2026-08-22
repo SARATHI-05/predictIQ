@@ -308,11 +308,26 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
     # Dispatch email to user's inbox
     email_sent = send_verification_email(to_email=user.email, code=code)
 
+    if not email_sent:
+        log_audit_event(
+            db=db,
+            action="VERIFICATION_EMAIL_FAILED",
+            module="Authentication",
+            description=f"Failed to dispatch 6-digit verification code to email: {user.email}",
+            user=user,
+            record_id=str(user.id),
+            request=request
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to send verification code email. Please check your SMTP mail server configuration."
+        )
+
     log_audit_event(
         db=db,
         action="VERIFICATION_CODE_SENT_EMAIL",
         module="Authentication",
-        description=f"6-digit verification code sent to email: {user.email} (Email Sent: {email_sent})",
+        description=f"6-digit verification code sent to email: {user.email} (Email Sent: True)",
         user=user,
         record_id=str(user.id),
         request=request
@@ -321,8 +336,7 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
     return {
         "success": True,
         "message": f"A 6-digit verification code has been sent to {user.email}. Please check your email inbox (including Spam/Updates).",
-        "email_sent": email_sent,
-        "code_preview": code if not email_sent else None
+        "email_sent": True
     }
 
 
