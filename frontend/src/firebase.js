@@ -1,19 +1,14 @@
 // Firebase Client Configuration for PredictIQ
-// To enable Google Sign-In:
-// 1. Go to Firebase Console (https://console.firebase.google.com/)
-// 2. Create a project and enable Authentication -> Sign-in method -> Google (Enabled).
-// 3. Register a Web App and copy your config values to your .env file.
-
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDummyKeyForPredictIQDemo2026",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "predictiq-auth.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "predictiq-auth",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "predictiq-auth.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1029384756",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1029384756:web:abcdef123456"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAS0-sCBMzjci-BsJ9tpoK0OpCItA66zOk",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "predictiq-b5039.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "predictiq-b5039",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "predictiq-b5039.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "355947199257",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:355947199257:web:1331d0cdb93469aa0be388"
 };
 
 // Initialize Firebase once

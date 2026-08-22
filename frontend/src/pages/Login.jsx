@@ -92,6 +92,7 @@ const Login = () => {
         {/* PRIMARY GOOGLE SIGN-IN VIA FIREBASE */}
         <div style={{ marginBottom: '1.25rem' }}>
           <GoogleLogin
+            buttonText="Sign in with Google"
             onError={(err) => setError(err)}
             onSuccess={() => navigate('/dashboard')}
           />

@@ -92,6 +92,7 @@ const Register = () => {
         {/* GOOGLE SIGN UP BUTTON */}
         <div style={{ marginBottom: '1.25rem' }}>
           <GoogleLogin
+            buttonText="Sign up with Google"
             onError={(err) => setError(err)}
             onSuccess={() => navigate('/dashboard')}
           />
