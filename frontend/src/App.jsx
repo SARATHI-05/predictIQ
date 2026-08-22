@@ -2,9 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { NavProvider } from './context/NavContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
+import MobileBottomNav from './components/MobileBottomNav';
 
 // Existing Pages (Preserved)
 import Login from './pages/Login';
@@ -38,9 +40,10 @@ const AppLayout = ({ children }) => {
       <Sidebar />
       <div className="main-content">
         <Navbar />
-        <main style={{ flex: 1 }}>
+        <main className="main-viewport" style={{ flex: 1 }}>
           {children}
         </main>
+        <MobileBottomNav />
       </div>
     </div>
   );
@@ -51,7 +54,8 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <Router>
-          <Routes>
+          <NavProvider>
+            <Routes>
             {/* Public Authentication Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -225,10 +229,11 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </Router>
-      </ToastProvider>
-    </AuthProvider>
-  );
+        </NavProvider>
+      </Router>
+    </ToastProvider>
+  </AuthProvider>
+);
 }
 
 export default App;
