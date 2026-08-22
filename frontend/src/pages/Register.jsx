@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, User, Lock, Mail, Shield, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Sparkles, User, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import GoogleLogin from '../components/GoogleLogin';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,7 +9,6 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState('Staff');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -26,7 +25,7 @@ const Register = () => {
 
     setLoading(true);
 
-    const result = await register(name.trim(), email.trim(), password, role);
+    const result = await register(name.trim(), email.trim(), password);
     setLoading(false);
 
     if (result.success) {
@@ -189,22 +188,6 @@ const Register = () => {
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Role Designation</label>
-            <div style={{ position: 'relative' }}>
-              <select
-                className="form-control"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                style={{ paddingLeft: '2.5rem' }}
-              >
-                <option value="Staff">Kitchen Staff (Food Records, Predictions, Reports)</option>
-                <option value="Admin">System Administrator (Full Management & ML)</option>
-              </select>
-              <Shield size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
           </div>
 
