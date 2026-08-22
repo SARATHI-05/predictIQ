@@ -14,8 +14,6 @@ from app.schemas.user import (
     TokenResponse,
     LoginRequest,
     GoogleLoginRequest,
-    SendSignupCodeRequest,
-    SendSignupCodeResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     VerifyCodeRequest,
@@ -32,67 +30,15 @@ from app.utils.auth import (
 )
 from app.utils.audit import log_audit_event
 from app.utils.firebase_auth import verify_firebase_id_token
-from app.utils.email_service import send_verification_email, send_welcome_email
+from app.utils.email_service import send_verification_email
+
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
-# In-memory store for pending signup email verification codes: { email: { "code": str, "expires_at": datetime } }
-_signup_verification_codes = {}
-
-@router.post("/send-signup-code", response_model=SendSignupCodeResponse)
-def send_signup_code(payload: SendSignupCodeRequest, request: Request, db: Session = Depends(get_db)):
-    """
-    Generate and dispatch a 6-digit email verification code for new user registration.
-    Recipient is dynamically set to the user's entered email.
-    """
-    email = payload.email.strip().lower()
-
-    # Check if user already exists
-    existing = db.query(User).filter(User.email == email).first()
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A user with this email already exists. Please sign in instead."
-        )
-
-    # Generate random 6-digit code (100000 - 999999)
-    code = f"{secrets.randbelow(900000) + 100000}"
-    expires_at = datetime.utcnow() + timedelta(minutes=10)
-
-    _signup_verification_codes[email] = {
-        "code": code,
-        "expires_at": expires_at
-    }
-
-    # Dispatch verification email (Sender: predictiqfoodmanagement@gmail.com, Recipient: user's entered email)
-    email_sent = send_verification_email(to_email=email, code=code)
-
-    log_audit_event(
-        db=db,
-        action="SIGNUP_VERIFICATION_CODE_SENT",
-        module="Authentication",
-        description=f"6-digit signup verification code sent to {email} (Email Sent: {email_sent})",
-        user=None,
-        record_id=email,
-        request=request
-    )
-
-    return {
-        "success": True,
-        "message": f"Verification code sent to {email}",
-        "code_preview": code
-    }
-
-
 @router.post("/register", response_model=TokenResponse)
 def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db)):
-    """
-    Verify 6-digit email code, create user account, and dispatch signup/welcome email.
-    """
-    email = user_in.email.strip().lower()
-
     if len(user_in.password) < 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -100,42 +46,20 @@ def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db
         )
 
     # Check if user already exists
-    existing = db.query(User).filter(User.email == email).first()
+    existing = db.query(User).filter(User.email == user_in.email).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this email already exists"
         )
-
-    # Verify 6-digit email verification code (required for email registration)
-    if not user_in.code or len(user_in.code.strip()) != 6:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A 6-digit email verification code is required. Please request a code first."
-        )
-
-    code_entry = _signup_verification_codes.get(email)
-    if not code_entry or code_entry["code"] != user_in.code.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid verification code. Please check your email and enter the 6-digit code."
-        )
-    if code_entry["expires_at"] < datetime.utcnow():
-        _signup_verification_codes.pop(email, None)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verification code has expired (valid for 10 minutes). Please request a new code."
-        )
-    # Clean up code after successful verification
-    _signup_verification_codes.pop(email, None)
-
+    
     # First user registered is Admin, subsequent are Staff by default unless specified
     user_count = db.query(User).count()
     role = "Admin" if user_count == 0 else (user_in.role or "Staff")
 
     new_user = User(
-        name=user_in.name.strip(),
-        email=email,
+        name=user_in.name,
+        email=user_in.email,
         password_hash=get_password_hash(user_in.password),
         role=role,
         is_active=True,
@@ -155,21 +79,14 @@ def register(user_in: UserCreate, request: Request, db: Session = Depends(get_db
         request=request
     )
 
-    # Automatically dispatch welcome email to user's registered email
-    try:
-        send_welcome_email(to_email=new_user.email, user_name=new_user.name)
-    except Exception as e:
-        print(f"[Auth Register] Welcome email dispatch notice: {e}")
-
     token = create_access_token(data={"sub": new_user.email, "role": new_user.role, "name": new_user.name})
     return {
         "success": True,
-        "message": f"Account created successfully! Welcome email sent to {new_user.email}",
+        "message": "Registration successful",
         "access_token": token,
         "token_type": "bearer",
         "user": new_user
     }
-
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
@@ -212,7 +129,7 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
                     detail="Your account has been deactivated. Please contact your system administrator."
                 )
 
-            # Update Firebase UID, avatar, and last login (No welcome email for existing login)
+            # Update Firebase UID, avatar, and last login
             if uid and not user.firebase_uid:
                 user.firebase_uid = uid
             if avatar:
@@ -261,12 +178,6 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
                 record_id=str(user.id),
                 request=request
             )
-
-            # Automatically dispatch welcome email for NEW Google user
-            try:
-                send_welcome_email(to_email=user.email, user_name=user.name)
-            except Exception as e:
-                print(f"[Auth Google] Welcome email dispatch notice: {e}")
 
         jwt_token = create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
         return {
@@ -357,7 +268,6 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
         "user": user
     }
 
-
 @router.post("/google", response_model=TokenResponse)
 def google_auth(payload: GoogleLoginRequest, request: Request, db: Session = Depends(get_db)):
     """
@@ -366,13 +276,12 @@ def google_auth(payload: GoogleLoginRequest, request: Request, db: Session = Dep
     login_req = LoginRequest(token=payload.credential)
     return login(login_req, request, db)
 
-
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
 def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
     """
-    Generate a 6-digit numeric verification code for email verification and password reset.
+    Generate a 6-digit numeric verification code for email verification.
     """
-    email = payload.email.strip().lower()
+    email = payload.email.lower()
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
@@ -392,10 +301,11 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
     # Generate secure 6-digit numeric verification code (100000 - 999999)
     code = f"{secrets.randbelow(900000) + 100000}"
     user.reset_token = code
-    user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
+    user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=15)
     db.commit()
 
-    # Dispatch email to user's exact inbox
+
+    # Dispatch email to user's inbox
     email_sent = send_verification_email(to_email=user.email, code=code)
 
     log_audit_event(
@@ -410,10 +320,11 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
 
     return {
         "success": True,
-        "message": f"Verification code sent to {user.email}",
+        "message": f"A 6-digit verification code has been sent to {user.email}. Please check your email inbox (including Spam/Updates).",
         "email_sent": email_sent,
-        "code_preview": code
+        "code_preview": code if not email_sent else None
     }
+
 
 
 @router.post("/verify-code", response_model=SimpleMessageResponse)
@@ -421,7 +332,7 @@ def verify_code(payload: VerifyCodeRequest, request: Request, db: Session = Depe
     """
     Verify the 6-digit email verification code.
     """
-    email = payload.email.strip().lower()
+    email = payload.email.lower()
     code = payload.code.strip()
 
     if not code or len(code) != 6:
@@ -449,14 +360,13 @@ def verify_code(payload: VerifyCodeRequest, request: Request, db: Session = Depe
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Verification code has expired (valid for 10 minutes). Please request a new code."
+            detail="Verification code has expired (valid for 15 minutes). Please request a new code."
         )
 
     return {
         "success": True,
-        "message": "Email verified successfully!"
+        "message": "Verification code verified successfully."
     }
-
 
 @router.post("/reset-password", response_model=SimpleMessageResponse)
 def reset_password(payload: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
@@ -469,37 +379,30 @@ def reset_password(payload: ResetPasswordRequest, request: Request, db: Session 
             detail="New password must be at least 6 characters long."
         )
 
-    email = (payload.email or "").strip().lower()
-    code = (payload.code or "").strip()
-    token = (payload.token or "").strip()
+    code_val = (payload.code or payload.token or "").strip()
+    if not code_val:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification code is required."
+        )
 
-    user = None
-    if email:
-        user = db.query(User).filter(User.email == email).first()
-    elif token:
-        user = db.query(User).filter(User.reset_token == token).first()
+    if payload.email:
+        user = db.query(User).filter(User.email == payload.email.lower()).first()
+    else:
+        user = db.query(User).filter(User.reset_token == code_val).first()
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid request or account not found."
         )
 
-    # Verify code/token matches
-    if code:
-        if not user.reset_token or user.reset_token != code:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid verification code."
-            )
-    elif token:
-        if not user.reset_token or user.reset_token != token:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired reset token."
-            )
+    if not user.reset_token or user.reset_token != code_val:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification code. Please verify your code again."
+        )
 
-    # Check expiration
     if user.reset_token_expiry and user.reset_token_expiry < datetime.utcnow():
         user.reset_token = None
         user.reset_token_expiry = None
@@ -509,24 +412,32 @@ def reset_password(payload: ResetPasswordRequest, request: Request, db: Session 
             detail="Verification code has expired. Please request a new code."
         )
 
-    # Update password and clear reset token
     user.password_hash = get_password_hash(payload.new_password)
     user.reset_token = None
     user.reset_token_expiry = None
-    user.last_login = datetime.utcnow()
     db.commit()
+    db.refresh(user)
 
     log_audit_event(
         db=db,
         action="PASSWORD_RESET_SUCCESS",
         module="Authentication",
-        description=f"Password reset successfully for user: {user.email}",
+        description=f"Password updated successfully with 6-digit code for user: {user.email}",
         user=user,
         record_id=str(user.id),
         request=request
     )
 
     return {
-        "success": True,
-        "message": "Password reset successfully! You can now log in with your new password."
+        "message": "Your password has been successfully updated! You can now sign in with your new password.",
+        "success": True
     }
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.get("/users", response_model=list[UserResponse])
+def list_users(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    return db.query(User).order_by(User.id.desc()).all()
