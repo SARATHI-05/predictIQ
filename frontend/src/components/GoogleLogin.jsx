@@ -59,6 +59,8 @@ const GoogleLogin = ({ onError, onSuccess, buttonText = 'Continue with Google' }
       } else if (error.code === 'auth/unauthorized-domain') {
         const currentHost = window.location.hostname;
         errorMsg = `The domain "${currentHost}" is not authorized in Firebase Console. Please add it to Firebase Console -> Authentication -> Settings -> Authorized Domains.`;
+      } else if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
+        errorMsg = 'Google Sign-In is not enabled in Firebase Console. Go to Firebase Console -> Authentication -> Sign-in method -> Click "Google" -> Toggle "Enable" -> Select your support email -> Click Save.';
       } else if (error.code === 'auth/invalid-api-key' || error.code === 'auth/configuration-not-found') {
         errorMsg = 'Firebase configuration is incomplete. Please check your Firebase environment variables.';
       } else if (error.message) {
