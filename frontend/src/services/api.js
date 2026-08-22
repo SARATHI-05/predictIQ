@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { auth } from '../firebase';
 
 // Dynamic API Base URL resolution
 export const getApiBaseUrl = () => {
@@ -45,13 +46,26 @@ const api = axios.create({
   timeout: 30000,
 });
 
-// Request Interceptor: Attach standard PredictIQ JWT access token
+// Request Interceptor: Attach fresh Firebase ID Token or standard JWT
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    try {
+      if (auth && auth.currentUser) {
+        const fbToken = await auth.currentUser.getIdToken();
+        if (fbToken) {
+          config.headers.Authorization = `Bearer ${fbToken}`;
+          return config;
+        }
+      }
+    } catch (tokenErr) {
+      console.warn('[API Auth] Failed to retrieve dynamic Firebase token:', tokenErr);
+    }
+
     const localToken = localStorage.getItem('predictiq_token');
     if (localToken && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${localToken}`;
     }
+
     return config;
   },
   (error) => {
@@ -82,7 +96,7 @@ api.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
     const originalRequest = error.config;
 
     // Error Diagnosis & Logging
@@ -90,14 +104,18 @@ api.interceptors.response.use(
       const { status, data } = error.response;
       console.warn(`[API ${status} Error] [${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}]:`, data?.detail || data?.message || data);
 
-      if (status === 401) {
-        // If unauthorized and not on auth pages, prompt sign in
-        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-          console.warn('[API Auth] Session expired or invalid.');
+      // Handle 401 Unauthorized with token refresh if using Firebase
+      if (status === 401 && !originalRequest._retry && auth?.currentUser) {
+        originalRequest._retry = true;
+        try {
+          const refreshedToken = await auth.currentUser.getIdToken(true);
+          originalRequest.headers.Authorization = `Bearer ${refreshedToken}`;
+          return api(originalRequest);
+        } catch (refreshErr) {
+          console.error('[API Auth] Token refresh failed:', refreshErr);
         }
       }
     } else if (error.request) {
-      // Network Error / CORS Error / Server Down
       console.error(`[API Network/CORS Error] Cannot reach backend API at "${API_BASE_URL}". Please verify VITE_API_URL and backend CORS configuration.`, error);
     } else {
       console.error('[API Setup Error]:', error.message);

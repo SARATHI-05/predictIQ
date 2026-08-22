@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, User, Lock, Mail, Shield, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import GoogleLogin from '../components/GoogleLogin';
 import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
@@ -54,7 +55,7 @@ const Register = () => {
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
         {/* Logo Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{
             width: '54px',
             height: '54px',
@@ -94,6 +95,31 @@ const Register = () => {
             <span>{error}</span>
           </div>
         )}
+
+        {/* PRIMARY FIREBASE GOOGLE SIGN-UP */}
+        <div style={{ marginBottom: '1.25rem' }}>
+          <GoogleLogin
+            buttonText="Sign up with Google"
+            onError={(err) => setError(err)}
+            onSuccess={() => navigate('/dashboard')}
+          />
+        </div>
+
+        {/* Divider */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          margin: '1.25rem 0',
+          color: 'var(--text-muted)',
+          fontSize: '0.725rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+          <span>Or register with email</span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+        </div>
 
         {/* Standard Email Registration Form */}
         <form onSubmit={handleSubmit} autoComplete="on">
@@ -186,7 +212,7 @@ const Register = () => {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.85rem', marginTop: '0.75rem' }}
+            style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
           >
             {loading ? 'Creating Account...' : 'Complete Registration'}
             {!loading && <ArrowRight size={16} />}

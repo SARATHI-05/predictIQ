@@ -22,7 +22,7 @@ def init_firebase_admin():
 
     try:
         cred_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_KEY")
-        project_id = os.getenv("FIREBASE_PROJECT_ID", "predictiq-b5039")
+        project_id = os.getenv("FIREBASE_PROJECT_ID", "predictiq-77")
 
         if cred_path and os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
