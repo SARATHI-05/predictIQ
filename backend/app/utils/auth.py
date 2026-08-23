@@ -118,6 +118,20 @@ def get_current_user(
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
+
+        # Dispatch official Welcome Email to newly registered user
+        if sb_email and "@" in sb_email:
+            try:
+                import threading
+                from app.services.email_service import send_welcome_email
+                threading.Thread(
+                    target=send_welcome_email, 
+                    args=(new_user.email, new_user.name, new_user.role), 
+                    daemon=True
+                ).start()
+            except Exception as mail_err:
+                print(f"[Auth] Notice: Could not send welcome email: {mail_err}")
+
         return new_user
     except HTTPException:
         raise
