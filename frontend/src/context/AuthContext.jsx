@@ -27,8 +27,18 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    // 2. Initialize Supabase Session check
+    // 2. Initialize Supabase Session check & Recovery detection
     const initSession = async () => {
+      // Auto-route to reset password page if URL contains recovery token
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash || '';
+        const search = window.location.search || '';
+        if ((hash.includes('type=recovery') || search.includes('type=recovery')) && !window.location.pathname.includes('/reset-password')) {
+          window.location.href = '/reset-password' + hash;
+          return;
+        }
+      }
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (session && session.user && isMounted) {
@@ -83,6 +93,15 @@ export const AuthProvider = ({ children }) => {
     // 3. Supabase onAuthStateChange listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return;
+
+      if (event === 'PASSWORD_RECOVERY') {
+        // User clicked Reset Password link in email -> redirect directly to /reset-password!
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/reset-password')) {
+          window.location.href = '/reset-password';
+        }
+        setLoading(false);
+        return;
+      }
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
