@@ -289,12 +289,21 @@ const Navbar = () => {
                 fontSize: '0.8rem',
                 fontWeight: 700
               }}>
-                {(user.name || 'U').charAt(0).toUpperCase()}
+                {(() => {
+                  const displayName = (user.name && user.name !== 'PredictIQ User') ? user.name : (user.email ? user.email.split('@')[0] : 'U');
+                  return displayName.charAt(0).toUpperCase();
+                })()}
               </div>
             )}
             <div className="navbar-user-details">
-              <div style={{ fontSize: '0.775rem', fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '110px' }}>
-                {user.name || user.email || 'PredictIQ User'}
+              <div style={{ fontSize: '0.775rem', fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '130px' }}>
+                {(() => {
+                  if (user.name && user.name !== 'PredictIQ User') return user.name;
+                  if (user.email) {
+                    return user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                  }
+                  return 'PredictIQ User';
+                })()}
               </div>
               <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                 {user.role || 'Staff'}

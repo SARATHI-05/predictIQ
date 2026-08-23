@@ -80,11 +80,9 @@ def register(user_in: UserCreate, request: Request, background_tasks: Background
     # Generate 6-digit numeric OTP specifically for purpose='signup'
     otp_code = generate_and_save_otp(db=db, email=email, purpose="signup", expiry_minutes=10)
 
-    user_name = (user_in.name or "").strip() or email
-
     if existing:
         user = existing
-        user.name = user_name
+        user.name = user_in.name.strip()
         user.password_hash = get_password_hash(user_in.password)
         user.role = role
         user.is_active = False
@@ -92,7 +90,7 @@ def register(user_in: UserCreate, request: Request, background_tasks: Background
         user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
     else:
         user = User(
-            name=user_name,
+            name=user_in.name.strip(),
             email=email,
             password_hash=get_password_hash(user_in.password),
             role=role,
@@ -259,7 +257,13 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                 detail="Verified email not found in Supabase authentication token."
             )
 
-        name = user_info.get("name") or email
+        raw_name = user_info.get("name")
+        if raw_name and raw_name not in ["PredictIQ User", "Google User"]:
+            name = raw_name
+        elif email:
+            name = email.split("@")[0].replace(".", " ").replace("_", " ").replace("-", " ").title()
+        else:
+            name = "PredictIQ User"
         avatar = user_info.get("picture")
 
         user = db.query(User).filter(
@@ -302,6 +306,8 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
 
             if uid and not getattr(user, 'supabase_uid', None):
                 user.supabase_uid = uid
+            if (not user.name or user.name in ["PredictIQ User", "Google User"]) and name != "PredictIQ User":
+                user.name = name
             if avatar and not getattr(user, 'avatar_url', None):
                 user.avatar_url = avatar
             if "admin" in email or token_str == "demo_google_admin":

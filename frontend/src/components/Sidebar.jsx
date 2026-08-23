@@ -203,11 +203,20 @@ const Sidebar = () => {
               fontSize: '0.85rem',
               flexShrink: 0
             }}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              {(() => {
+                const displayName = (user?.name && user.name !== 'PredictIQ User') ? user.name : (user?.email ? user.email.split('@')[0] : 'U');
+                return displayName.charAt(0).toUpperCase();
+              })()}
             </div>
             <div style={{ overflow: 'hidden', flex: 1 }}>
               <div style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {user?.name || user?.email || 'PredictIQ User'}
+                {(() => {
+                  if (user?.name && user.name !== 'PredictIQ User') return user.name;
+                  if (user?.email) {
+                    return user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                  }
+                  return 'PredictIQ User';
+                })()}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
                 {user?.role === 'Admin' ? (

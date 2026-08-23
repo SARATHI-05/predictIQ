@@ -67,7 +67,13 @@ def get_current_user(
         supabase_info = verify_supabase_token(token)
         sb_email = (supabase_info.get("email") or "").lower()
         sb_uid = supabase_info.get("uid")
-        sb_name = supabase_info.get("name") or sb_email or "PredictIQ User"
+        raw_name = supabase_info.get("name")
+        if raw_name and raw_name not in ["PredictIQ User", "Google User"]:
+            sb_name = raw_name
+        elif sb_email:
+            sb_name = sb_email.split("@")[0].replace(".", " ").replace("_", " ").replace("-", " ").title()
+        else:
+            sb_name = "PredictIQ User"
         sb_avatar = supabase_info.get("picture")
 
         user = None
@@ -81,10 +87,13 @@ def get_current_user(
             user = db.query(User).filter(User.email == sb_email).first()
 
         if user:
-            # Safely sync Supabase UID and Avatar if missing
+            # Safely sync Supabase UID, Name, and Avatar
             updated = False
             if sb_uid and not getattr(user, 'supabase_uid', None):
                 user.supabase_uid = sb_uid
+                updated = True
+            if (not user.name or user.name in ["PredictIQ User", "Google User"]) and sb_name != "PredictIQ User":
+                user.name = sb_name
                 updated = True
             if sb_avatar and not getattr(user, 'avatar_url', None):
                 user.avatar_url = sb_avatar
