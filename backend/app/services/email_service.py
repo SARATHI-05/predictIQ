@@ -259,10 +259,10 @@ PredictIQ Security Team
 def send_welcome_email(email: str, name: str = "", role: str = "Staff") -> bool:
     """
     Sends an official Welcome Email to verified users.
-    Recipient: User's registered email address.
+    Recipient: User's verified email address (strictly dynamic).
     """
-    display_name = name.strip() if name else email.split("@")[0].capitalize()
-    subject = "Welcome to PredictIQ – AI-Based Food Demand and Resource Planning System"
+    display_name = name.strip() if name else email.split("@")[0].replace(".", " ").replace("_", " ").title()
+    subject = "Welcome to PredictIQ – Your Account is Ready!"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -272,14 +272,16 @@ def send_welcome_email(email: str, name: str = "", role: str = "Staff") -> bool:
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0B0F17; color: #E2E8F0; margin: 0; padding: 24px 12px; line-height: 1.6; }}
-        .container {{ max-width: 540px; margin: 0 auto; background: #131B2A; border: 1px solid #1E293B; border-radius: 16px; padding: 36px 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }}
+        .container {{ max-width: 560px; margin: 0 auto; background: #131B2A; border: 1px solid #1E293B; border-radius: 16px; padding: 36px 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }}
         .header {{ text-align: center; margin-bottom: 24px; }}
         .logo {{ font-size: 28px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.5px; }}
         .accent {{ color: #10B981; }}
         .subtitle {{ font-size: 13px; color: #94A3B8; margin-top: 4px; }}
         .content {{ font-size: 15px; color: #CBD5E1; }}
-        .highlight-card {{ background: #0B0F17; border-left: 3px solid #10B981; border-radius: 8px; padding: 16px 20px; margin: 22px 0; font-size: 14px; color: #E2E8F0; }}
-        .btn {{ display: block; background: linear-gradient(135deg, #10B981 0%, #06B6D4 100%); color: #FFFFFF; font-weight: 700; font-size: 15px; text-align: center; text-decoration: none; padding: 14px 24px; border-radius: 10px; margin: 26px 0 18px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); }}
+        .features-list {{ background: #0B0F17; border-left: 3px solid #10B981; border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 14px; color: #E2E8F0; }}
+        .features-list ul {{ margin: 8px 0 0 0; padding-left: 20px; }}
+        .features-list li {{ margin-bottom: 6px; color: #CBD5E1; }}
+        .btn {{ display: block; background: linear-gradient(135deg, #10B981 0%, #06B6D4 100%); color: #FFFFFF !important; font-weight: 700; font-size: 15px; text-align: center; text-decoration: none; padding: 14px 24px; border-radius: 10px; margin: 26px 0 18px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); }}
         .footer {{ margin-top: 30px; font-size: 13px; color: #94A3B8; border-top: 1px solid #1E293B; padding-top: 20px; }}
         .footer-title {{ font-weight: 700; color: #F1F5F9; }}
       </style>
@@ -294,50 +296,69 @@ def send_welcome_email(email: str, name: str = "", role: str = "Staff") -> bool:
         <div class="content">
           <p style="font-size: 17px; font-weight: 700; color: #FFFFFF; margin-top: 0;">Hello {display_name},</p>
           
-          <p>Welcome to <strong>PredictIQ</strong>! Your account has been verified and is ready to use.</p>
+          <p>Welcome to <strong>PredictIQ</strong> – AI-Based Food Demand and Resource Planning System!</p>
           
-          <div class="highlight-card">
-            With PredictIQ, you can manage food preparation records, monitor waste analytics, track raw inventory, and leverage machine learning models to forecast future meal demand with pinpoint precision.
+          <p>Your PredictIQ account has been successfully created and verified.</p>
+          
+          <div class="features-list">
+            <strong>You can now use PredictIQ to:</strong>
+            <ul>
+              <li>Monitor food preparation and consumption</li>
+              <li>Generate AI-based food demand predictions</li>
+              <li>Analyze food demand trends</li>
+              <li>Track food wastage and leftovers</li>
+              <li>Receive alerts</li>
+              <li>Manage datasets and records</li>
+              <li>Generate reports and analytics</li>
+            </ul>
           </div>
           
-          <p>You can sign in anytime to access your dashboard, reports, and AI predictions:</p>
+          <p>Your account is now ready to use.</p>
           
-          <a href="https://predict-iq-green.vercel.app/login" class="btn" style="color: #FFFFFF;">
-            Sign In to PredictIQ Dashboard
+          <a href="https://predict-iq-green.vercel.app/" class="btn">
+            Login to PredictIQ
           </a>
-          
-          <p style="font-size: 13px; color: #94A3B8;">
-            Your assigned role: <strong style="color: #10B981;">{role}</strong>
+
+          <p style="font-size: 13px; color: #94A3B8; margin-top: 15px;">
+            Thank you for joining PredictIQ.
           </p>
         </div>
 
         <div class="footer">
           Best regards,<br/>
           <span class="footer-title">PredictIQ Team</span><br/>
-          <span style="font-size: 12px; color: #64748B;">AI-Based Food Demand and Resource Planning System</span>
+          <a href="mailto:predictiqfoodmanagement@gmail.com" style="color: #10B981; text-decoration: none; font-size: 12px;">predictiqfoodmanagement@gmail.com</a>
         </div>
       </div>
     </body>
     </html>
     """
 
-    text_content = f"""Welcome to PredictIQ!
+    text_content = f"""Hello {display_name},
 
-Hello {display_name},
+Welcome to PredictIQ – AI-Based Food Demand and Resource Planning System!
 
 Your PredictIQ account has been successfully created and verified.
 
-With PredictIQ, you can manage food records, reduce wastage, track inventory, and use AI-powered demand forecasts.
+You can now use PredictIQ to:
+- Monitor food preparation and consumption
+- Generate AI-based food demand predictions
+- Analyze food demand trends
+- Track food wastage and leftovers
+- Receive alerts
+- Manage datasets and records
+- Generate reports and analytics
 
-Sign in to your dashboard:
-https://predict-iq-green.vercel.app/login
+Your account is now ready to use.
 
-Role: {role}
+Login:
+https://predict-iq-green.vercel.app/
 
-Thank you for choosing PredictIQ!
+Thank you for joining PredictIQ.
 
 Best regards,
 PredictIQ Team
+predictiqfoodmanagement@gmail.com
 """
 
     return _dispatch_email(to_email=email, subject=subject, html_content=html_content, text_content=text_content)
