@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import GoogleLogin from '../components/GoogleLogin';
 import { supabase } from '../supabaseClient';
+import api from '../services/api';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -23,7 +24,7 @@ const Register = () => {
 
   const navigate = useNavigate();
 
-  // Submit Registration Form with Supabase
+  // Submit Registration Form with Supabase & Backend SMTP Dispatch
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -36,29 +37,45 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const trimmedEmail = email.trim();
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedName = name.trim();
+
+      // 1. Register user with Supabase Auth
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password: password,
         options: {
           data: {
-            name: name.trim(),
+            name: trimmedName,
           }
         }
       });
 
       if (signUpError) {
         setError(signUpError.message);
-      } else {
-        // Redirect to Sign In with prefilled email and verification notice
-        navigate('/login', {
-          state: {
-            email: trimmedEmail,
-            signupSuccess: true,
-            message: 'Your account has been created. Please check your email and verify your address before logging in.'
-          }
-        });
+        setLoading(false);
+        return;
       }
+
+      // 2. Trigger Backend SMTP email delivery & database sync
+      try {
+        await api.post('/api/auth/register', {
+          name: trimmedName,
+          email: trimmedEmail,
+          password: password
+        });
+      } catch (backendErr) {
+        console.warn('[Register] Backend SMTP sync notice:', backendErr);
+      }
+
+      // 3. Redirect to Sign In with prefilled email and verification notice
+      navigate('/login', {
+        state: {
+          email: trimmedEmail,
+          signupSuccess: true,
+          message: 'Your account has been created. Please check your email inbox and verify your address before logging in.'
+        }
+      });
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during signup.');
     } finally {
