@@ -13,6 +13,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import AccountVerified from './pages/AccountVerified';
 import Dashboard from './pages/Dashboard';
 
 import FoodRecords from './pages/FoodRecords';
@@ -61,6 +62,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/account-verified" element={<AccountVerified />} />
 
 
             {/* Protected Application Routes */}

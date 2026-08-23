@@ -327,11 +327,9 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                 request=request
             )
         else:
-            # Create new user in SQL database with pending OTP verification
+            # Provision new user directly from verified Supabase Google profile
             user_count = db.query(User).count()
             role = "Admin" if ("admin" in email or token_str == "demo_google_admin" or user_count == 0) else "Staff"
-
-            otp_code = generate_and_save_otp(db=db, email=email, purpose="google_signup", expiry_minutes=10)
 
             user = User(
                 name=name,
@@ -341,35 +339,25 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                 avatar_url=avatar,
                 password_hash=f"oauth_supabase_{secrets.token_hex(16)}",
                 role=role,
-                is_active=False,
-                last_login=None,
-                reset_token=otp_code,
-                reset_token_expiry=datetime.utcnow() + timedelta(minutes=10)
+                is_active=True,
+                last_login=datetime.utcnow()
             )
             db.add(user)
             db.commit()
             db.refresh(user)
 
-            # Dispatch 6-digit OTP verification code to user's Gmail
-            background_tasks.add_task(send_google_verification_email, user.email, otp_code, user.name)
+            # Dispatch official Welcome Email to verified Google user
+            background_tasks.add_task(send_welcome_email, user.email, user.name, user.role)
 
             log_audit_event(
                 db=db,
-                action="GOOGLE_SIGNUP_OTP_INITIATED",
+                action="GOOGLE_SIGNUP_SUCCESS",
                 module="Authentication",
-                description=f"Google signup initiated for {user.email}. Verification code sent to Gmail.",
+                description=f"New user {user.email} registered & verified via Supabase Google OAuth",
                 user=user,
                 record_id=str(user.id),
                 request=request
             )
-
-            return {
-                "success": True,
-                "requires_verification": True,
-                "email": user.email,
-                "name": user.name,
-                "message": f"A 6-digit verification code has been sent to your Gmail ({user.email}). Please enter it to complete signup."
-            }
 
         jwt_token = create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
         return {
