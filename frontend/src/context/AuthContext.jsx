@@ -34,8 +34,23 @@ export const AuthProvider = ({ children }) => {
         if (session && session.user && isMounted) {
           setSupabaseUser(session.user);
           const accessToken = session.access_token;
+          
+          const metaName = session.user.user_metadata?.full_name || 
+                           session.user.user_metadata?.name || 
+                           (session.user.email ? session.user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '');
+          
+          if (metaName && (!user || !user.name || user.name === 'PredictIQ User')) {
+            const tempUser = {
+              id: session.user.id,
+              name: metaName,
+              email: session.user.email,
+              role: (session.user.email?.includes('admin') ? 'Admin' : 'Staff'),
+              avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
+            };
+            setUser(tempUser);
+          }
 
-          // Sync with Backend SQL database if needed
+          // Sync with Backend SQL database
           try {
             const response = await api.post('/api/auth/login', { token: accessToken });
             if (response.data?.requires_verification) {
