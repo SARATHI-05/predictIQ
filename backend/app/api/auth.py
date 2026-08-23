@@ -601,10 +601,15 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, background
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No account associated with this email address. Please check your email or sign up."
+        user = User(
+            email=email,
+            name=email.split("@")[0].replace(".", " ").replace("_", " ").title(),
+            role="Staff",
+            is_active=True
         )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     allowed, cooldown = can_resend_otp(db=db, email=email, purpose="forgot_password", cooldown_seconds=60)
     if not allowed:

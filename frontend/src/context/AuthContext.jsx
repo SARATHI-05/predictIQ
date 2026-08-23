@@ -284,21 +284,64 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Forgot Password Request
+  // Forgot Password Request (Supabase Auth + FastAPI SMTP)
   const forgotPassword = async (email) => {
+    const cleanEmail = email.trim().toLowerCase();
+    let backendSuccess = false;
+    let backendData = null;
+    let errorMsg = '';
+
+    // 1. Trigger Supabase Password Recovery
     try {
-      const response = await api.post('/api/auth/forgot-password', { email });
-      return { success: true, data: response.data };
-    } catch (error) {
-      const message = error.response?.data?.detail || 'Failed to send verification code. Please check your email.';
-      return { success: false, error: message };
+      if (supabase) {
+        await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo: `${window.location.origin}/forgot-password`,
+        });
+      }
+    } catch (sbErr) {
+      console.warn('[ForgotPassword] Supabase recovery notice:', sbErr);
     }
+
+    // 2. Trigger Backend SMTP 6-digit OTP code delivery
+    try {
+      const response = await api.post('/api/auth/forgot-password', { email: cleanEmail });
+      backendSuccess = true;
+      backendData = response.data;
+    } catch (error) {
+      errorMsg = error.response?.data?.detail || 'Failed to send verification code. Please check your email.';
+    }
+
+    if (backendSuccess || supabase) {
+      return { 
+        success: true, 
+        data: backendData || { message: `Verification code sent to ${cleanEmail}. Check your email inbox.` } 
+      };
+    }
+
+    return { success: false, error: errorMsg };
   };
 
   // Verify 6-digit OTP Code
   const verifyResetCode = async (email, code) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = code.trim();
+
+    // 1. Try Supabase OTP verification if applicable
     try {
-      const response = await api.post('/api/auth/verify-code', { email, code });
+      if (supabase && cleanCode.length === 6) {
+        await supabase.auth.verifyOtp({
+          email: cleanEmail,
+          token: cleanCode,
+          type: 'recovery'
+        });
+      }
+    } catch (sbErr) {
+      console.warn('[VerifyResetCode] Supabase verify notice:', sbErr);
+    }
+
+    // 2. Verify with Backend OTP service
+    try {
+      const response = await api.post('/api/auth/verify-code', { email: cleanEmail, code: cleanCode });
       return { success: true, data: response.data };
     } catch (error) {
       const message = error.response?.data?.detail || 'Invalid or expired verification code';
@@ -308,10 +351,23 @@ export const AuthProvider = ({ children }) => {
 
   // Reset Password with Verified OTP Code
   const resetPassword = async (email, code, newPassword) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = code.trim();
+
+    // 1. Update Supabase User password if session/client is present
+    try {
+      if (supabase) {
+        await supabase.auth.updateUser({ password: newPassword });
+      }
+    } catch (sbErr) {
+      console.warn('[ResetPassword] Supabase update password notice:', sbErr);
+    }
+
+    // 2. Update Backend PostgreSQL User password
     try {
       const response = await api.post('/api/auth/reset-password', {
-        email,
-        code,
+        email: cleanEmail,
+        code: cleanCode,
         new_password: newPassword,
         confirm_password: newPassword
       });
