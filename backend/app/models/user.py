@@ -10,6 +10,7 @@ class User(Base):
     email = Column(String(150), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=True)  # Nullable for Google OAuth users
     firebase_uid = Column(String(255), unique=True, index=True, nullable=True)
+    supabase_uid = Column(String(255), unique=True, index=True, nullable=True)
     google_id = Column(String(100), unique=True, index=True, nullable=True)
     avatar_url = Column(String(500), nullable=True)
 

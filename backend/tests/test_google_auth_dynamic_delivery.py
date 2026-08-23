@@ -20,12 +20,12 @@ from app.services.otp_service import (
     verify_otp,
     can_resend_otp
 )
-from app.utils.firebase_auth import verify_firebase_id_token
+from app.utils.supabase_auth import verify_supabase_token
 from fastapi import HTTPException
 
 def run_tests():
     print("=" * 65)
-    print("RUNNING GOOGLE AUTH & DYNAMIC SMTP RECIPIENT VERIFICATION TESTS")
+    print("RUNNING SUPABASE GOOGLE AUTH & DYNAMIC SMTP RECIPIENT VERIFICATION TESTS")
     print("=" * 65)
 
     Base.metadata.create_all(bind=engine)
@@ -45,14 +45,14 @@ def run_tests():
         # TEST 2: Invalid & Missing Token Handling
         print("\n[TEST 2] Testing Invalid & Missing Token Rejection...")
         try:
-            verify_firebase_id_token("")
+            verify_supabase_token("")
             assert False, "Empty token should have been rejected!"
         except HTTPException as e:
             assert e.status_code == 400
             print("  [PASS] Empty token rejected with HTTP 400.")
 
         try:
-            verify_firebase_id_token("invalid_malformed_token_xyz")
+            verify_supabase_token("invalid_malformed_token_xyz")
             assert False, "Malformed token should have been rejected!"
         except HTTPException as e:
             assert e.status_code == 401
@@ -62,13 +62,13 @@ def run_tests():
         print("\n[TEST 3] Testing Dynamic Token Email Extraction & OTP Generation...")
 
         # Account A Token Simulation
-        token_info_a = verify_firebase_id_token("demo_google_admin")
+        token_info_a = verify_supabase_token("demo_google_admin")
         email_a = token_info_a.get("email")
         assert email_a == "sarathi.google@predictiq.com"
         print(f"  [PASS] Extracted verified email from Token A: {email_a}")
 
         # Account B Token Simulation
-        token_info_b = verify_firebase_id_token("demo_google_staff")
+        token_info_b = verify_supabase_token("demo_google_staff")
         email_b = token_info_b.get("email")
         assert email_b == "chef.alex.google@predictiq.com"
         print(f"  [PASS] Extracted verified email from Token B: {email_b}")
@@ -114,7 +114,7 @@ def run_tests():
         print("  [PASS] Single-use OTP enforcement confirmed.")
 
         print("\n" + "=" * 65)
-        print("ALL GOOGLE AUTH & DYNAMIC DELIVERY TESTS PASSED (100%)!")
+        print("ALL SUPABASE GOOGLE AUTH & DYNAMIC DELIVERY TESTS PASSED (100%)!")
         print("=" * 65)
 
     finally:

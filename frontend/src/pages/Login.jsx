@@ -1,31 +1,59 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { Sparkles, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import GoogleLogin from '../components/GoogleLogin';
-import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState(location.state?.email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState(
+    location.state?.signupSuccess
+      ? location.state.message || 'Your account has been created. Please check your email and verify your address before logging in.'
+      : ''
+  );
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  // Sync state if location.state changes
+  useEffect(() => {
+    if (location.state?.email) {
+      setEmail(location.state.email);
+    }
+    if (location.state?.signupSuccess) {
+      setSuccessMsg(
+        location.state.message || 'Your account has been created. Please check your email and verify your address before logging in.'
+      );
+    }
+  }, [location.state]);
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const result = await login(email.trim(), password);
-    setLoading(false);
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
 
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error);
+      if (authError) {
+        setError(authError.message);
+      } else if (data?.session) {
+        // Only redirect when a real session exists
+        navigate('/');
+      } else {
+        setError('Login failed. Please verify your account before logging in.');
+      }
+    } catch (err) {
+      setError(err.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,13 +98,14 @@ const Login = () => {
           </p>
         </div>
 
-        {error && (
+        {/* Success Alert Above Form (When coming from successful signup) */}
+        {successMsg && (
           <div style={{
             padding: '0.85rem 1rem',
-            background: 'rgba(244, 63, 94, 0.15)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
+            background: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
             borderRadius: '0.75rem',
-            color: '#FB7185',
+            color: '#34D399',
             fontSize: '0.825rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -84,17 +113,17 @@ const Login = () => {
             gap: '0.5rem',
             lineHeight: 1.4
           }}>
-            <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
-            <span>{error}</span>
+            <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: '1px' }} />
+            <span>{successMsg}</span>
           </div>
         )}
 
-        {/* PRIMARY FIREBASE GOOGLE SIGN-IN */}
+        {/* PRIMARY SUPABASE GOOGLE SIGN-IN */}
         <div style={{ marginBottom: '1.25rem' }}>
           <GoogleLogin
             buttonText="Continue with Google"
             onError={(err) => setError(err)}
-            onSuccess={() => navigate('/dashboard')}
+            onSuccess={() => navigate('/')}
           />
         </div>
 
@@ -191,6 +220,26 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign In'}
             {!loading && <ArrowRight size={16} />}
           </button>
+
+          {/* Simple Error Display Under Form */}
+          {error && (
+            <div style={{
+              padding: '0.75rem 1rem',
+              background: 'rgba(244, 63, 94, 0.15)',
+              border: '1px solid rgba(244, 63, 94, 0.3)',
+              borderRadius: '0.75rem',
+              color: '#FB7185',
+              fontSize: '0.825rem',
+              marginTop: '1rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.5rem',
+              lineHeight: 1.4
+            }}>
+              <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>{error}</span>
+            </div>
+          )}
         </form>
 
         {/* Footer */}

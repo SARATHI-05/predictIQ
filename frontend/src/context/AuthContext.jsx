@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { supabase } from '../supabaseClient';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -8,11 +7,13 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [firebaseUser, setFirebaseUser] = useState(null);
+  const [supabaseUser, setSupabaseUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Monitor Firebase Auth state change across page reloads & restore stored session
+  // Monitor Supabase Auth state change across page reloads & OAuth redirect callbacks
   useEffect(() => {
+    let isMounted = true;
+
     // 1. Initial local storage check for instant render
     const savedToken = localStorage.getItem('predictiq_token');
     const savedUser = localStorage.getItem('predictiq_user');
@@ -26,51 +27,73 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    // 2. Firebase onAuthStateChanged listener
-    const unsubscribe = onAuthStateChanged(auth, async (currentFirebaseUser) => {
-      if (currentFirebaseUser) {
-        setFirebaseUser(currentFirebaseUser);
-        try {
-          // Obtain valid Firebase ID Token
-          const idToken = await currentFirebaseUser.getIdToken();
+    // 2. Initialize Supabase Session check
+    const initSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (session && session.user && isMounted) {
+          setSupabaseUser(session.user);
+          const accessToken = session.access_token;
 
-          // Sync with Backend SQL database
-          const response = await api.post('/api/auth/login', { token: idToken });
-          
-          // If the backend indicates the account requires 6-digit OTP verification, skip auto-login state overwrite
-          if (response.data?.requires_verification) {
-            console.log('[Auth] Google signup pending 6-digit OTP verification for:', response.data.email);
-            setLoading(false);
-            return;
-          }
+          // Sync with Backend SQL database if needed
+          try {
+            const response = await api.post('/api/auth/login', { token: accessToken });
+            if (response.data?.requires_verification) {
+              console.log('[Auth] Google signup pending 6-digit OTP verification for:', response.data.email);
+              if (isMounted) setLoading(false);
+              return;
+            }
 
-          const { access_token, user: userData } = response.data;
-
-          if (access_token && userData) {
-            const authToken = access_token || idToken;
-            localStorage.setItem('predictiq_token', authToken);
-            localStorage.setItem('predictiq_user', JSON.stringify(userData));
-
-            setToken(authToken);
-            setUser(userData);
-          }
-        } catch (error) {
-          console.warn('Backend sync onAuthStateChanged notice:', error);
-          if (!savedUser && currentFirebaseUser) {
-            const fallbackUser = {
-              name: currentFirebaseUser.displayName || 'Google User',
-              email: currentFirebaseUser.email,
-              avatar_url: currentFirebaseUser.photoURL,
-              firebase_uid: currentFirebaseUser.uid,
-              role: 'Staff'
-            };
-            setUser(fallbackUser);
-            setToken('firebase_session');
+            const { access_token, user: userData } = response.data;
+            if (access_token && userData && isMounted) {
+              const authToken = access_token || accessToken;
+              localStorage.setItem('predictiq_token', authToken);
+              localStorage.setItem('predictiq_user', JSON.stringify(userData));
+              setToken(authToken);
+              setUser(userData);
+            }
+          } catch (syncErr) {
+            console.warn('Backend sync on getSession notice:', syncErr);
           }
         }
-      } else {
-        // Logged out from Firebase
-        setFirebaseUser(null);
+      } catch (err) {
+        console.warn('Supabase getSession notice:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initSession();
+
+    // 3. Supabase onAuthStateChange listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          setSupabaseUser(session.user);
+          const accessToken = session.access_token;
+          try {
+            const response = await api.post('/api/auth/login', { token: accessToken });
+            if (response.data?.requires_verification) {
+              setLoading(false);
+              return;
+            }
+
+            const { access_token, user: userData } = response.data;
+            if (access_token && userData) {
+              const authToken = access_token || accessToken;
+              localStorage.setItem('predictiq_token', authToken);
+              localStorage.setItem('predictiq_user', JSON.stringify(userData));
+              setToken(authToken);
+              setUser(userData);
+            }
+          } catch (err) {
+            console.warn('Supabase auth state sync error:', err);
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setSupabaseUser(null);
         if (!localStorage.getItem('predictiq_token')) {
           setUser(null);
           setToken(null);
@@ -79,7 +102,10 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      if (subscription) subscription.unsubscribe();
+    };
   }, []);
 
   // Helper to extract clean error message from API responses
@@ -101,14 +127,14 @@ export const AuthProvider = ({ children }) => {
     return error.message || defaultMsg;
   };
 
-  // Google Sign-In with Firebase ID Token
-  const loginWithGoogle = async (idToken, currentFirebaseUser) => {
+  // Google Sign-In with Supabase Access Token
+  const loginWithGoogle = async (accessToken, currentSupabaseUser) => {
     try {
-      const response = await api.post('/api/auth/login', { token: idToken });
+      const response = await api.post('/api/auth/login', { token: accessToken });
       
       // Check if this is a first-time Google signup requiring 6-digit OTP verification
       if (response.data?.requires_verification) {
-        if (currentFirebaseUser) setFirebaseUser(currentFirebaseUser);
+        if (currentSupabaseUser) setSupabaseUser(currentSupabaseUser);
         return {
           success: true,
           requiresVerification: true,
@@ -119,13 +145,13 @@ export const AuthProvider = ({ children }) => {
       }
 
       const { access_token, user: userData } = response.data;
-      const authToken = access_token || idToken;
+      const authToken = access_token || accessToken;
       localStorage.setItem('predictiq_token', authToken);
       localStorage.setItem('predictiq_user', JSON.stringify(userData));
 
       setToken(authToken);
       setUser(userData);
-      if (currentFirebaseUser) setFirebaseUser(currentFirebaseUser);
+      if (currentSupabaseUser) setSupabaseUser(currentSupabaseUser);
 
       return { success: true, user: userData };
     } catch (error) {
@@ -298,13 +324,13 @@ export const AuthProvider = ({ children }) => {
   // Secure Sign Out
   const logout = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
     } catch (err) {
-      console.warn('Firebase signOut notice:', err);
+      console.warn('Supabase signOut notice:', err);
     }
     localStorage.removeItem('predictiq_token');
     localStorage.removeItem('predictiq_user');
-    setFirebaseUser(null);
+    setSupabaseUser(null);
     setUser(null);
     setToken(null);
   };
@@ -314,7 +340,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         token,
-        firebaseUser,
+        supabaseUser,
         loading,
         loginWithGoogle,
         verifyGoogleOtp,

@@ -17,6 +17,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: int
     firebase_uid: Optional[str] = None
+    supabase_uid: Optional[str] = None
     is_active: Optional[bool] = True
     avatar_url: Optional[str] = None
     last_login: Optional[datetime] = None
@@ -36,7 +37,7 @@ class TokenResponse(BaseModel):
     name: Optional[str] = None
 
 class LoginRequest(BaseModel):
-    token: Optional[str] = None  # Firebase ID token
+    token: Optional[str] = None  # Supabase access token or Google OAuth token
     credential: Optional[str] = None  # Alias for token
     email: Optional[EmailStr] = None  # Email/password login
     password: Optional[str] = None

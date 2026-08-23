@@ -28,7 +28,7 @@ from app.utils.auth import (
     require_admin
 )
 from app.utils.audit import log_audit_event
-from app.utils.firebase_auth import verify_firebase_id_token
+from app.utils.supabase_auth import verify_supabase_token
 from app.services.email_service import (
     send_signup_verification_code,
     send_forgot_password_code,
@@ -229,14 +229,14 @@ def resend_signup_code(payload: ForgotPasswordRequest, request: Request, backgro
 
 
 # -------------------------------------------------------------------------
-# 2. LOGIN (EMAIL/PASSWORD & GOOGLE FIREBASE)
+# 2. LOGIN (EMAIL/PASSWORD & SUPABASE GOOGLE AUTH)
 # -------------------------------------------------------------------------
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
     Unified Authentication Endpoint:
-    1. If 'token' is provided -> Verifies Firebase Google ID Token and syncs SQL User.
+    1. If 'token' is provided -> Verifies Supabase Google OAuth Token and syncs SQL User.
     2. If 'email' and 'password' is provided -> Authenticates with password hash.
     """
     token_str = (payload.token or payload.credential or "").strip()
@@ -245,23 +245,26 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
         if auth_header.lower().startswith("bearer "):
             token_str = auth_header[7:].strip()
 
-    # --- CASE 1: Firebase Google Authentication ---
+    # --- CASE 1: Supabase Google Authentication ---
     if token_str:
-        user_info = verify_firebase_id_token(token_str)
+        user_info = verify_supabase_token(token_str)
         uid = user_info.get("uid")
         email = user_info.get("email", "").strip().lower()
 
         if not email or "@" not in email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verified email not found in Google authentication token."
+                detail="Verified email not found in Supabase authentication token."
             )
 
         name = user_info.get("name") or email.split("@")[0].capitalize()
         avatar = user_info.get("picture")
 
         user = db.query(User).filter(
-            (User.firebase_uid == uid) | (User.email == email) | (User.google_id == uid)
+            (User.supabase_uid == uid) | 
+            (User.email == email) | 
+            (User.firebase_uid == uid) | 
+            (User.google_id == uid)
         ).first()
 
         if user:
@@ -295,9 +298,9 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                     "message": f"A 6-digit verification code has been sent to your Gmail ({user.email}). Please enter it to complete signup."
                 }
 
-            if uid and not user.firebase_uid:
-                user.firebase_uid = uid
-            if avatar:
+            if uid and not getattr(user, 'supabase_uid', None):
+                user.supabase_uid = uid
+            if avatar and not getattr(user, 'avatar_url', None):
                 user.avatar_url = avatar
             if "admin" in email or token_str == "demo_google_admin":
                 user.role = "Admin"
@@ -308,9 +311,9 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
 
             log_audit_event(
                 db=db,
-                action="LOGIN_SUCCESS_FIREBASE",
+                action="LOGIN_SUCCESS_SUPABASE",
                 module="Authentication",
-                description=f"User {user.email} authenticated via Firebase Google Sign-In",
+                description=f"User {user.email} authenticated via Supabase Google Sign-In",
                 user=user,
                 record_id=str(user.id),
                 request=request
@@ -325,10 +328,10 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
             user = User(
                 name=name,
                 email=email,
-                firebase_uid=uid,
+                supabase_uid=uid,
                 google_id=uid,
                 avatar_url=avatar,
-                password_hash=f"oauth_firebase_{secrets.token_hex(16)}",
+                password_hash=f"oauth_supabase_{secrets.token_hex(16)}",
                 role=role,
                 is_active=False,
                 last_login=None,
@@ -373,7 +376,7 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
     if not payload.email or not payload.password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please provide a valid Firebase token or email and password."
+            detail="Please provide a valid Supabase token or email and password."
         )
 
     user = db.query(User).filter(User.email == payload.email.strip().lower()).first()
@@ -472,7 +475,7 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
 @router.post("/google", response_model=TokenResponse)
 def google_auth(payload: GoogleLoginRequest, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
-    Alias for Firebase / Google ID token authentication.
+    Alias for Supabase / Google OAuth token authentication.
     """
     login_req = LoginRequest(token=payload.credential)
     return login(login_req, request, background_tasks, db)

@@ -98,13 +98,9 @@ def run_new_feature_tests():
         "role": "Staff"
     }
     status_reg, reg_resp = make_request("POST", "/api/auth/register", temp_user_payload)
-    if status_reg == 200 or status_reg == 201:
-        temp_user_id = reg_resp["user"]["id"]
-    else:
-        # User may already exist from previous run, find ID
-        status_users, users_list = make_request("GET", "/api/users", token=token)
-        temp_user = next((u for u in users_list if u["email"] == temp_user_payload["email"]), None)
-        temp_user_id = temp_user["id"] if temp_user else None
+    status_users, users_list = make_request("GET", "/api/users", token=token)
+    temp_user = next((u for u in users_list if u["email"] == temp_user_payload["email"]), None)
+    temp_user_id = temp_user["id"] if temp_user else (reg_resp.get("user", {}).get("id") if isinstance(reg_resp, dict) and reg_resp.get("user") else None)
 
     if temp_user_id:
         status_del, del_res = make_request("DELETE", f"/api/users/{temp_user_id}", token=token)

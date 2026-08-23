@@ -36,23 +36,42 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
     # Safe column migration for existing user table
-    with engine.connect() as conn:
-        for col_def in [
-            "is_active BOOLEAN DEFAULT 1",
-            "last_login DATETIME",
-            "firebase_uid VARCHAR(255)",
-            "google_id VARCHAR(100)",
-            "avatar_url VARCHAR(500)",
-            "reset_token VARCHAR(255)",
-            "reset_token_expiry DATETIME"
-        ]:
-
-            col_name = col_def.split()[0]
-            try:
-                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_def}"))
-                conn.commit()
-            except Exception:
-                pass # column already exists or dialect specific
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        if "users" in inspector.get_table_names():
+            existing_cols = {col["name"].lower() for col in inspector.get_columns("users")}
+            
+            # Map of column name -> Postgres / SQLite definition
+            required_cols = [
+                ("supabase_uid", "VARCHAR(255)"),
+                ("firebase_uid", "VARCHAR(255)"),
+                ("google_id", "VARCHAR(100)"),
+                ("avatar_url", "VARCHAR(500)"),
+                ("is_active", "BOOLEAN DEFAULT TRUE"),
+                ("last_login", "TIMESTAMP"),
+                ("reset_token", "VARCHAR(255)"),
+                ("reset_token_expiry", "TIMESTAMP"),
+            ]
+            
+            with engine.connect() as conn:
+                for col_name, col_type in required_cols:
+                    if col_name.lower() not in existing_cols:
+                        try:
+                            conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
+                            conn.commit()
+                            print(f"[DB Migration] Successfully added missing column '{col_name}' to users table.")
+                        except Exception:
+                            conn.rollback()
+                            try:
+                                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                                conn.commit()
+                                print(f"[DB Migration] Added column '{col_name}' to users table.")
+                            except Exception as alt_err:
+                                conn.rollback()
+                                print(f"[DB Migration Notice] Could not add '{col_name}': {alt_err}")
+    except Exception as inspect_err:
+        print(f"[DB Migration Notice] Inspector notice: {inspect_err}")
 
 
     db: Session = SessionLocal()

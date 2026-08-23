@@ -17,7 +17,7 @@ def get_user_from_header_or_query(
     auth_header: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> Optional[User]:
-    """Authorize user via standard Bearer header or query param with full JWT & Firebase support"""
+    """Authorize user via standard Bearer header or query param with full JWT & Supabase support"""
     credentials = auth_header
     if (not credentials or not credentials.credentials) and token_query:
         credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token_query)

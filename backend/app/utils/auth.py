@@ -35,7 +35,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-from app.utils.firebase_auth import verify_firebase_id_token
+from app.utils.supabase_auth import verify_supabase_token
 
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
@@ -62,28 +62,49 @@ def get_current_user(
     except Exception:
         pass
 
-    # 2. Second Attempt: Firebase ID Token / Google OAuth Token
+    # 2. Second Attempt: Supabase Auth / Google OAuth Token
     try:
-        firebase_info = verify_firebase_id_token(token)
-        fb_email = (firebase_info.get("email") or "").lower()
-        fb_uid = firebase_info.get("uid")
+        supabase_info = verify_supabase_token(token)
+        sb_email = (supabase_info.get("email") or "").lower()
+        sb_uid = supabase_info.get("uid")
+        sb_name = supabase_info.get("name") or "PredictIQ User"
+        sb_avatar = supabase_info.get("picture")
 
         user = None
-        if fb_email:
-            user = db.query(User).filter(User.email == fb_email).first()
-        if not user and fb_uid:
-            user = db.query(User).filter(User.firebase_uid == fb_uid).first()
+        if sb_uid:
+            user = db.query(User).filter(
+                (User.supabase_uid == sb_uid) | 
+                (User.firebase_uid == sb_uid) | 
+                (User.google_id == sb_uid)
+            ).first()
+        if not user and sb_email:
+            user = db.query(User).filter(User.email == sb_email).first()
 
         if user:
+            # Safely sync Supabase UID and Avatar if missing
+            updated = False
+            if sb_uid and not getattr(user, 'supabase_uid', None):
+                user.supabase_uid = sb_uid
+                updated = True
+            if sb_avatar and not getattr(user, 'avatar_url', None):
+                user.avatar_url = sb_avatar
+                updated = True
+            if updated:
+                db.commit()
+                db.refresh(user)
             return user
 
         # If user doesn't exist in DB yet, auto-provision account
+        user_count = db.query(User).count()
+        role = "Admin" if (user_count == 0 or "admin" in (sb_email or "").lower()) else "Staff"
         new_user = User(
-            email=fb_email or f"{fb_uid}@firebase.predictiq",
-            name=firebase_info.get("name") or "PredictIQ User",
-            role="Admin" if "admin" in (fb_email or "").lower() else "Staff",
-            firebase_uid=fb_uid,
-            is_active=True
+            email=sb_email or f"{sb_uid}@auth.predictiq",
+            name=sb_name,
+            role=role,
+            supabase_uid=sb_uid,
+            avatar_url=sb_avatar,
+            is_active=True,
+            last_login=datetime.utcnow()
         )
         db.add(new_user)
         db.commit()

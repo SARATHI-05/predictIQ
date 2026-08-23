@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { Mail, CheckCircle2, AlertCircle, ArrowRight, RotateCw, X } from 'lucide-react';
-import { auth, googleProvider } from '../firebase';
+import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 
 const GoogleLogin = ({ onError, onSuccess, buttonText = 'Continue with Google' }) => {
@@ -33,39 +32,43 @@ const GoogleLogin = ({ onError, onSuccess, buttonText = 'Continue with Google' }
     return () => clearInterval(timer);
   }, [resendTimer]);
 
-  // Process Mobile Google Sign-In Redirect Results on page load
+  // Process Supabase OAuth session on redirect arrival
   useEffect(() => {
     let isMounted = true;
 
-    const processRedirect = async () => {
+    const checkRedirectSession = async () => {
       try {
-        const result = await getRedirectResult(auth);
-        if (result && result.user && isMounted) {
-          setLoading(true);
-          setStatusMessage('Connecting with PredictIQ Cloud...');
-          if (onError) onError('');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (session && session.user && isMounted) {
+          // If URL contains hash/query from OAuth redirect, process backend sync
+          const hasOAuthParams = window.location.hash.includes('access_token') || window.location.search.includes('code');
+          if (hasOAuthParams) {
+            setLoading(true);
+            setStatusMessage('Connecting with PredictIQ Cloud...');
+            if (onError) onError('');
 
-          const firebaseUser = result.user;
-          const idToken = await firebaseUser.getIdToken();
-          const backendResult = await loginWithGoogle(idToken, firebaseUser);
+            const backendResult = await loginWithGoogle(session.access_token, session.user);
+            if (!isMounted) return;
 
-          if (!isMounted) return;
+            if (backendResult.requiresVerification) {
+              setVerifyEmail(backendResult.email || session.user.email);
+              setVerifyName(backendResult.name || session.user.user_metadata?.full_name || 'Google User');
+              setVerifySuccessMsg(backendResult.message || `A 6-digit verification code has been sent to ${backendResult.email}`);
+              setResendTimer(60);
+              setShowVerifyModal(true);
+              // Clean URL
+              window.history.replaceState({}, document.title, window.location.pathname);
+              return;
+            }
 
-          if (backendResult.requiresVerification) {
-            setVerifyEmail(backendResult.email || firebaseUser.email);
-            setVerifyName(backendResult.name || firebaseUser.displayName || 'Google User');
-            setVerifySuccessMsg(backendResult.message || `A 6-digit verification code has been sent to ${backendResult.email}`);
-            setResendTimer(60);
-            setShowVerifyModal(true);
-            return;
-          }
-
-          if (backendResult.success) {
-            if (onSuccess) onSuccess(backendResult.user);
-            navigate('/dashboard');
-          } else {
-            const err = backendResult.error || 'Backend verification failed. Please try again.';
-            if (onError) onError(err);
+            if (backendResult.success) {
+              window.history.replaceState({}, document.title, window.location.pathname);
+              if (onSuccess) onSuccess(backendResult.user);
+              navigate('/dashboard');
+            } else {
+              const err = backendResult.error || 'Backend verification failed. Please try again.';
+              if (onError) onError(err);
+            }
           }
         }
       } catch (redirectErr) {
@@ -81,86 +84,42 @@ const GoogleLogin = ({ onError, onSuccess, buttonText = 'Continue with Google' }
       }
     };
 
-    processRedirect();
+    checkRedirectSession();
 
     return () => {
       isMounted = false;
     };
   }, []);
 
+  // Google OAuth Login Trigger via Supabase
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    setStatusMessage('Opening Google Sign-In...');
+    setStatusMessage('Redirecting to Google Sign-In...');
     if (onError) onError('');
 
     try {
-      // 1. Attempt Popup Sign-In first (Desktop & Mobile browsers supporting popups)
-      let result;
-      try {
-        result = await signInWithPopup(auth, googleProvider);
-      } catch (popupErr) {
-        // Fall back to Redirect on popup blockers or mobile webviews
-        if (
-          popupErr.code === 'auth/popup-blocked' ||
-          popupErr.code === 'auth/cancelled-popup-request' ||
-          popupErr.code === 'auth/popup-closed-by-user'
-        ) {
-          setStatusMessage('Redirecting to Google Sign-In...');
-          await signInWithRedirect(auth, googleProvider);
-          return;
+      const redirectUrl = window.location.origin;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
-        throw popupErr;
-      }
+      });
 
-      const firebaseUser = result.user;
-      setStatusMessage('Authenticating with PredictIQ Cloud...');
-
-      // 2. Obtain secure Firebase ID token
-      const idToken = await firebaseUser.getIdToken();
-
-      // 3. Send token to Render backend to sync SQL database
-      const backendResult = await loginWithGoogle(idToken, firebaseUser);
-
-      // 4. Check if first-time user requires 6-digit OTP verification
-      if (backendResult.requiresVerification) {
-        setVerifyEmail(backendResult.email || firebaseUser.email);
-        setVerifyName(backendResult.name || firebaseUser.displayName || 'Google User');
-        setVerifySuccessMsg(backendResult.message || `A 6-digit verification code has been sent to ${backendResult.email}`);
-        setResendTimer(60);
-        setShowVerifyModal(true);
-        return;
-      }
-
-      if (backendResult.success) {
-        if (onSuccess) onSuccess(backendResult.user);
-        navigate('/dashboard');
-      } else {
-        const err = backendResult.error || 'Backend verification failed. Please try again.';
-        if (onError) onError(err);
+      if (error) {
+        throw error;
       }
     } catch (error) {
-      console.error('Firebase Google Sign-In Error:', error);
+      console.error('Supabase Google Sign-In Error:', error);
       let errorMsg = 'Google authentication failed. Please try again.';
-
-      if (error.code === 'auth/popup-closed-by-user') {
-        errorMsg = 'Sign-in cancelled. The popup was closed before completing.';
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        errorMsg = 'Only one popup request is allowed at a time.';
-      } else if (error.code === 'auth/popup-blocked') {
-        errorMsg = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
-      } else if (error.code === 'auth/unauthorized-domain') {
-        const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'domain';
-        errorMsg = `The domain "${currentHost}" is not authorized in Firebase Console. Please add "${currentHost}" in Firebase Console -> Authentication -> Settings -> Authorized Domains.`;
-      } else if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
-        errorMsg = 'Google Sign-In is not enabled in Firebase Console. Go to Firebase Console -> Authentication -> Sign-in method -> Click "Google" -> Toggle "Enable" -> Select project support email -> Click Save.';
-      } else if (error.code === 'auth/invalid-api-key' || error.code === 'auth/configuration-not-found') {
-        errorMsg = 'Firebase configuration is incomplete. Please check your Firebase environment variables.';
-      } else if (error.message) {
+      if (error.message) {
         errorMsg = error.message;
       }
-
       if (onError) onError(errorMsg);
-    } finally {
       setLoading(false);
       setStatusMessage('');
     }
@@ -402,7 +361,7 @@ const GoogleLogin = ({ onError, onSuccess, buttonText = 'Continue with Google' }
                   }}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', fontSize: '0.775rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Code valid for 15 mins</span>
+                  <span style={{ color: 'var(--text-muted)' }}>Code valid for 10 mins</span>
                   <button
                     type="button"
                     onClick={handleResendOtp}

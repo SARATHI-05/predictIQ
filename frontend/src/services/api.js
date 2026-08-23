@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { auth } from '../firebase';
+import { supabase } from '../supabaseClient';
 
 // Official Production Backend URL
 export const PRODUCTION_BACKEND_URL = 'https://predictiq-backend-wln6.onrender.com';
@@ -51,24 +51,24 @@ const api = axios.create({
   timeout: 60000, // 60s timeout to accommodate Render cold boot
 });
 
-// Request Interceptor: Attach fresh Firebase ID Token or standard JWT
+// Request Interceptor: Attach fresh Supabase Access Token or standard PredictIQ JWT
 api.interceptors.request.use(
   async (config) => {
+    const localToken = typeof window !== 'undefined' ? localStorage.getItem('predictiq_token') : null;
+    if (localToken && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${localToken}`;
+      return config;
+    }
+
     try {
-      if (auth && auth.currentUser) {
-        const fbToken = await auth.currentUser.getIdToken();
-        if (fbToken) {
-          config.headers.Authorization = `Bearer ${fbToken}`;
-          return config;
+      if (supabase && !config.headers.Authorization) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.access_token) {
+          config.headers.Authorization = `Bearer ${session.access_token}`;
         }
       }
     } catch (tokenErr) {
-      console.warn('[API Auth] Dynamic Firebase token retrieval notice:', tokenErr);
-    }
-
-    const localToken = localStorage.getItem('predictiq_token');
-    if (localToken && !config.headers.Authorization) {
-      config.headers.Authorization = `Bearer ${localToken}`;
+      console.warn('[API Auth] Dynamic Supabase token retrieval notice:', tokenErr);
     }
 
     return config;
@@ -118,15 +118,18 @@ api.interceptors.response.use(
       return api(originalRequest);
     }
 
-    // Handle 401 Unauthorized with token refresh if using Firebase
-    if (error.response?.status === 401 && originalRequest && !originalRequest._tokenRetry && auth?.currentUser) {
+    // Handle 401 Unauthorized with Supabase session refresh
+    if (error.response?.status === 401 && originalRequest && !originalRequest._tokenRetry && supabase) {
       originalRequest._tokenRetry = true;
       try {
-        const refreshedToken = await auth.currentUser.getIdToken(true);
-        originalRequest.headers.Authorization = `Bearer ${refreshedToken}`;
-        return api(originalRequest);
+        const { data: { session }, error: refreshErr } = await supabase.auth.refreshSession();
+        if (session && session.access_token) {
+          localStorage.setItem('predictiq_token', session.access_token);
+          originalRequest.headers.Authorization = `Bearer ${session.access_token}`;
+          return api(originalRequest);
+        }
       } catch (refreshErr) {
-        console.error('[API Auth] Token refresh failed:', refreshErr);
+        console.error('[API Auth] Supabase token refresh failed:', refreshErr);
       }
     }
 
