@@ -80,9 +80,11 @@ def register(user_in: UserCreate, request: Request, background_tasks: Background
     # Generate 6-digit numeric OTP specifically for purpose='signup'
     otp_code = generate_and_save_otp(db=db, email=email, purpose="signup", expiry_minutes=10)
 
+    user_name = (user_in.name or "").strip() or email
+
     if existing:
         user = existing
-        user.name = user_in.name.strip()
+        user.name = user_name
         user.password_hash = get_password_hash(user_in.password)
         user.role = role
         user.is_active = False
@@ -90,7 +92,7 @@ def register(user_in: UserCreate, request: Request, background_tasks: Background
         user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
     else:
         user = User(
-            name=user_in.name.strip(),
+            name=user_name,
             email=email,
             password_hash=get_password_hash(user_in.password),
             role=role,
@@ -257,7 +259,7 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                 detail="Verified email not found in Supabase authentication token."
             )
 
-        name = user_info.get("name") or email.split("@")[0].capitalize()
+        name = user_info.get("name") or email
         avatar = user_info.get("picture")
 
         user = db.query(User).filter(

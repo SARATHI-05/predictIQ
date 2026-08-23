@@ -207,7 +207,7 @@ const Sidebar = () => {
             </div>
             <div style={{ overflow: 'hidden', flex: 1 }}>
               <div style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {user?.name || 'PredictIQ User'}
+                {user?.name || user?.email || 'PredictIQ User'}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
                 {user?.role === 'Admin' ? (

@@ -294,7 +294,7 @@ const Navbar = () => {
             )}
             <div className="navbar-user-details">
               <div style={{ fontSize: '0.775rem', fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '110px' }}>
-                {user.name || 'PredictIQ User'}
+                {user.name || user.email || 'PredictIQ User'}
               </div>
               <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                 {user.role || 'Staff'}

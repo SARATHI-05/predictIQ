@@ -67,7 +67,7 @@ def get_current_user(
         supabase_info = verify_supabase_token(token)
         sb_email = (supabase_info.get("email") or "").lower()
         sb_uid = supabase_info.get("uid")
-        sb_name = supabase_info.get("name") or "PredictIQ User"
+        sb_name = supabase_info.get("name") or sb_email or "PredictIQ User"
         sb_avatar = supabase_info.get("picture")
 
         user = None
