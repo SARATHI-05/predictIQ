@@ -1,52 +1,99 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Sparkles, Lock, Key, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { Lock, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { supabase } from '../supabaseClient';
+import api from '../services/api';
 
 const ResetPassword = () => {
-  const [searchParams] = useSearchParams();
-  const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const { resetPassword } = useAuth();
+  const [userEmail, setUserEmail] = useState('');
+
   const navigate = useNavigate();
 
+  // Listen for Supabase recovery auth state
   useEffect(() => {
-    const urlToken = searchParams.get('token');
-    if (urlToken) {
-      setToken(urlToken);
-    }
-  }, [searchParams]);
+    let isMounted = true;
+
+    const checkRecoverySession = async () => {
+      try {
+        const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+        if (session && session.user && isMounted) {
+          setUserEmail(session.user.email || '');
+        }
+      } catch (err) {
+        console.warn('[ResetPassword] Session check notice:', err);
+      }
+    };
+
+    checkRecoverySession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (isMounted && session?.user) {
+        setUserEmail(session.user.email || '');
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (subscription) subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError('Password must be at least 6 characters long.');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match.');
       return;
     }
 
     setLoading(true);
-    const res = await resetPassword(token, newPassword);
-    setLoading(false);
 
-    if (res.success) {
+    try {
+      // 1. Update Password in Supabase Auth
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // 2. Sync updated password hash with PostgreSQL Backend if user email exists
+      if (userEmail) {
+        try {
+          await api.post('/api/auth/reset-password', {
+            email: userEmail,
+            code: 'supabase_recovery',
+            new_password: newPassword,
+            confirm_password: newPassword
+          });
+        } catch (syncErr) {
+          console.warn('[ResetPassword] Backend sync notice:', syncErr);
+        }
+      }
+
       setSuccess(true);
       setTimeout(() => {
         navigate('/login');
       }, 2500);
-    } else {
-      setError(res.error);
+    } catch (err) {
+      console.error('Reset Password Error:', err);
+      setError(err.message || 'Failed to update password. Please try requesting a new reset link.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,7 +104,8 @@ const ResetPassword = () => {
       alignItems: 'center',
       justifyContent: 'center',
       background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
-      padding: '1.5rem'
+      padding: '1.5rem',
+      position: 'relative'
     }}>
       <div className="glass-card animate-fade-in" style={{
         width: '100%',
@@ -80,13 +128,17 @@ const ResetPassword = () => {
             boxShadow: 'var(--shadow-glow)',
             marginBottom: '1rem'
           }}>
-            <Lock size={28} color="#FFFFFF" />
+            <ShieldCheck size={28} color="#FFFFFF" />
           </div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Set New Password
           </h1>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-            Enter your reset token and choose a strong new password
+            {userEmail ? (
+              <span>Updating password for <strong style={{ color: '#10B981' }}>{userEmail}</strong></span>
+            ) : (
+              'Enter your new password below to secure your account'
+            )}
           </p>
         </div>
 
@@ -131,10 +183,10 @@ const ResetPassword = () => {
               <CheckCircle2 size={28} />
             </div>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#34D399', marginBottom: '0.5rem' }}>
-              Password Changed!
+              Password Changed Successfully!
             </h3>
             <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-              Your password has been successfully updated. Redirecting to login in a moment...
+              Your password has been updated. Redirecting you to Sign In...
             </p>
             <button
               type="button"
@@ -142,28 +194,12 @@ const ResetPassword = () => {
               className="btn btn-primary"
               style={{ width: '100%', padding: '0.8rem' }}
             >
-              <span>Go to Sign In Now</span>
+              <span>Go to Sign In</span>
               <ArrowRight size={16} />
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label">Security Reset Token</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  required
-                  className="form-control"
-                  placeholder="Paste reset token here"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  style={{ paddingLeft: '2.5rem', fontFamily: 'monospace', fontSize: '0.825rem' }}
-                />
-                <Key size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
-              </div>
-            </div>
-
             <div className="form-group">
               <label className="form-label">New Password</label>
               <div style={{ position: 'relative' }}>
@@ -171,7 +207,7 @@ const ResetPassword = () => {
                   type={showPassword ? 'text' : 'password'}
                   required
                   className="form-control"
-                  placeholder="At least 6 characters"
+                  placeholder="Enter new password (min. 6 characters)"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
@@ -201,15 +237,32 @@ const ResetPassword = () => {
               <label className="form-label">Confirm New Password</label>
               <div style={{ position: 'relative' }}>
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? 'text' : 'password'}
                   required
                   className="form-control"
                   placeholder="Re-enter new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ paddingLeft: '2.5rem' }}
+                  style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                 />
                 <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.9rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 
@@ -219,7 +272,7 @@ const ResetPassword = () => {
               className="btn btn-primary"
               style={{ width: '100%', padding: '0.85rem' }}
             >
-              {loading ? 'Updating Password...' : 'Save New Password'}
+              {loading ? 'Saving New Password...' : 'Save New Password'}
               {!loading && <ArrowRight size={16} />}
             </button>
           </form>
