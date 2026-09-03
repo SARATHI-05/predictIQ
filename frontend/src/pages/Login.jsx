@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { Sparkles, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import GoogleLogin from '../components/GoogleLogin';
 import { supabase } from '../supabaseClient';
 
@@ -19,8 +19,9 @@ const Login = () => {
   );
   const [loading, setLoading] = useState(false);
 
-  // Sync state if location.state changes
-  useEffect(() => {
+  const [prevKey, setPrevKey] = useState(location.key);
+  if (location.key !== prevKey) {
+    setPrevKey(location.key);
     if (location.state?.email) {
       setEmail(location.state.email);
     }
@@ -29,7 +30,7 @@ const Login = () => {
         location.state.message || 'Your account has been created. Please check your email and verify your address before logging in.'
       );
     }
-  }, [location.state]);
+  }
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
@@ -63,53 +64,50 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #F0FDF4 0%, #F4F6F8 100%)',
+      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
-      <div className="card animate-fade-in" style={{
+      <div className="glass-card animate-fade-in" style={{
         width: '100%',
         maxWidth: '440px',
         padding: '2.5rem',
-        borderRadius: '16px',
-        background: '#FFFFFF',
-        border: '1px solid var(--border-color)',
-        boxShadow: 'var(--shadow-dropdown)'
+        borderRadius: '1.25rem',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
-        {/* Logo Header matching screenshot brand */}
+        {/* Logo Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{
-            width: '52px',
-            height: '52px',
-            borderRadius: '14px',
-            background: 'var(--brand-primary)',
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(13, 127, 84, 0.3)',
+            boxShadow: 'var(--shadow-glow)',
             marginBottom: '0.85rem'
           }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 12h3l3-7 4 14 3-7h5" />
-            </svg>
+            <Sparkles size={32} color="#FFFFFF" />
           </div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#111827', letterSpacing: '-0.025em' }}>
-            Predict<span style={{ color: 'var(--brand-primary)' }}>IQ</span>
+          <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            Predict<span style={{ color: 'var(--accent-primary)' }}>IQ</span>
           </h1>
-          <p style={{ fontSize: '0.84rem', color: '#6B7280', marginTop: '0.3rem' }}>
-            AI Culinary Demand & Campus Resource Planning
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
+            AI-Based Food Demand & Resource Planning
           </p>
         </div>
 
-        {/* Success Alert Above Form */}
+        {/* Success Alert Above Form (When coming from successful signup) */}
         {successMsg && (
           <div style={{
             padding: '0.85rem 1rem',
-            background: '#EBF7EE',
-            border: '1px solid #A7F3D0',
-            borderRadius: '8px',
-            color: '#0D7F54',
-            fontSize: '0.8125rem',
+            background: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '0.75rem',
+            color: '#34D399',
+            fontSize: '0.825rem',
             marginBottom: '1.25rem',
             display: 'flex',
             alignItems: 'flex-start',
@@ -136,8 +134,8 @@ const Login = () => {
           alignItems: 'center',
           gap: '0.75rem',
           margin: '1.25rem 0',
-          color: '#9CA3AF',
-          fontSize: '0.725rem',
+          color: 'var(--text-muted)',
+          fontSize: '0.75rem',
           textTransform: 'uppercase',
           letterSpacing: '0.05em'
         }}>
@@ -158,10 +156,13 @@ const Login = () => {
                 className="form-control"
                 placeholder="name@organization.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError('');
+                }}
                 style={{ paddingLeft: '2.5rem' }}
               />
-              <Mail size={16} color="#9CA3AF" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
           </div>
 
@@ -172,9 +173,9 @@ const Login = () => {
                 to="/forgot-password"
                 style={{
                   fontSize: '0.75rem',
-                  color: 'var(--brand-primary)',
+                  color: 'var(--accent-primary)',
                   textDecoration: 'none',
-                  fontWeight: 600
+                  fontWeight: 500
                 }}
               >
                 Forgot password?
@@ -188,11 +189,14 @@ const Login = () => {
                 className="form-control"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError('');
+                }}
                 style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
               />
 
-              <Lock size={16} color="#9CA3AF" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -203,7 +207,7 @@ const Login = () => {
                   transform: 'translateY(-50%)',
                   background: 'none',
                   border: 'none',
-                  color: '#9CA3AF',
+                  color: 'var(--text-muted)',
                   cursor: 'pointer',
                   padding: 0
                 }}
@@ -218,7 +222,7 @@ const Login = () => {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem' }}
+            style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
           >
             {loading ? 'Signing in...' : 'Sign In'}
             {!loading && <ArrowRight size={16} />}
@@ -228,27 +232,48 @@ const Login = () => {
           {error && (
             <div style={{
               padding: '0.75rem 1rem',
-              background: '#FEF2F2',
-              border: '1px solid #FECACA',
-              borderRadius: '8px',
-              color: '#DC2626',
-              fontSize: '0.8125rem',
+              background: 'rgba(244, 63, 94, 0.15)',
+              border: '1px solid rgba(244, 63, 94, 0.3)',
+              borderRadius: '0.75rem',
+              color: '#FB7185',
+              fontSize: '0.825rem',
               marginTop: '1rem',
               display: 'flex',
-              alignItems: 'flex-start',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               gap: '0.5rem',
               lineHeight: 1.4
             }}>
-              <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
-              <span>{error}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                <span>{error}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setError('')}
+                title="Clear error"
+                aria-label="Dismiss error"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#FB7185',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  opacity: 0.8
+                }}
+              >
+                <X size={15} />
+              </button>
             </div>
           )}
         </form>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.8125rem', color: '#6B7280' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.75rem', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
           Don't have an account?{' '}
-          <Link to="/register" style={{ color: 'var(--brand-primary)', fontWeight: 700, textDecoration: 'none' }}>
+          <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}>
             Register here
           </Link>
         </div>

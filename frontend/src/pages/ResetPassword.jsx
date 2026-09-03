@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Eye, EyeOff, ShieldCheck, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import api from '../services/api';
 
@@ -22,7 +22,7 @@ const ResetPassword = () => {
 
     const checkRecoverySession = async () => {
       try {
-        const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user && isMounted) {
           setUserEmail(session.user.email || '');
         }
@@ -33,7 +33,7 @@ const ResetPassword = () => {
 
     checkRecoverySession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (isMounted && session?.user) {
         setUserEmail(session.user.email || '');
       }
@@ -63,7 +63,7 @@ const ResetPassword = () => {
 
     try {
       // 1. Update Password in Supabase Auth
-      const { data, error: updateError } = await supabase.auth.updateUser({
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
@@ -103,33 +103,32 @@ const ResetPassword = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #F0FDF4 0%, #F4F6F8 100%)',
+      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
-      <div className="card animate-fade-in" style={{
+      <div className="glass-card animate-fade-in" style={{
         width: '100%',
         maxWidth: '460px',
         padding: '2.5rem',
-        borderRadius: '16px',
-        background: '#FFFFFF',
-        border: '1px solid var(--border-color)',
-        boxShadow: 'var(--shadow-dropdown)'
+        borderRadius: '1.25rem',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
-            width: '52px',
-            height: '52px',
+            width: '54px',
+            height: '54px',
             borderRadius: '14px',
-            background: 'var(--brand-primary)',
+            background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(13, 127, 84, 0.3)',
+            boxShadow: 'var(--shadow-glow)',
             marginBottom: '1rem'
           }}>
-            <ShieldCheck size={26} color="#FFFFFF" />
+            <ShieldCheck size={28} color="#FFFFFF" />
           </div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Set New Password
@@ -154,10 +153,31 @@ const ResetPassword = () => {
             marginBottom: '1.25rem',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: '0.5rem'
           }}>
-            <AlertCircle size={16} />
-            <span>{error}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setError('')}
+              title="Clear error"
+              aria-label="Dismiss error"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#FB7185',
+                cursor: 'pointer',
+                padding: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                opacity: 0.8
+              }}
+            >
+              <X size={15} />
+            </button>
           </div>
         )}
 
@@ -210,7 +230,10 @@ const ResetPassword = () => {
                   className="form-control"
                   placeholder="Enter new password (min. 6 characters)"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (error) setError('');
+                  }}
                   style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                 />
                 <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
@@ -243,7 +266,10 @@ const ResetPassword = () => {
                   className="form-control"
                   placeholder="Re-enter new password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (error) setError('');
+                  }}
                   style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                 />
                 <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />

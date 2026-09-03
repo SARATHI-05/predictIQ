@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   KeyRound, 
@@ -7,7 +7,7 @@ import {
   ArrowLeft, 
   AlertCircle, 
   Inbox,
-  CheckCircle2
+  X
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import api from '../services/api';
@@ -36,7 +36,7 @@ const ForgotPassword = () => {
       const resetRedirectUrl = `${window.location.origin}/reset-password`;
 
       // 1. Dispatch password reset link via Supabase Auth
-      const { data, error: resetErr } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: resetRedirectUrl,
       });
 
@@ -66,33 +66,32 @@ const ForgotPassword = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #F0FDF4 0%, #F4F6F8 100%)',
+      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
-      <div className="card animate-fade-in" style={{
+      <div className="glass-card animate-fade-in" style={{
         width: '100%',
         maxWidth: '460px',
         padding: '2.5rem',
-        borderRadius: '16px',
-        background: '#FFFFFF',
-        border: '1px solid var(--border-color)',
-        boxShadow: 'var(--shadow-dropdown)'
+        borderRadius: '1.25rem',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
         {/* Header Icon & Title */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{
-            width: '52px',
-            height: '52px',
+            width: '54px',
+            height: '54px',
             borderRadius: '14px',
-            background: 'var(--brand-primary)',
+            background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(13, 127, 84, 0.3)',
+            boxShadow: 'var(--shadow-glow)',
             marginBottom: '1rem'
           }}>
-            <KeyRound size={26} color="#FFFFFF" />
+            <KeyRound size={28} color="#FFFFFF" />
           </div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Reset Your Password
@@ -114,10 +113,31 @@ const ForgotPassword = () => {
             marginBottom: '1.25rem',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: '0.5rem'
           }}>
-            <AlertCircle size={16} />
-            <span>{error}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setError('')}
+              title="Clear error"
+              aria-label="Dismiss error"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#FB7185',
+                cursor: 'pointer',
+                padding: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                opacity: 0.8
+              }}
+            >
+              <X size={15} />
+            </button>
           </div>
         )}
 
@@ -171,7 +191,10 @@ const ForgotPassword = () => {
                   className="form-control"
                   placeholder="Enter your registered email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError('');
+                  }}
                   style={{ paddingLeft: '2.5rem' }}
                 />
                 <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />

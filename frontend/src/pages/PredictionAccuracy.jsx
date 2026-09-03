@@ -259,15 +259,15 @@ const PredictionAccuracy = () => {
         <div style={{ width: '100%', height: 320 }}>
           <ResponsiveContainer>
             <LineChart data={filteredHistory.slice().reverse()}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-              <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} />
-              <YAxis stroke="#94A3B8" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={11} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} />
               <Tooltip 
-                contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#FFFFFF' }}
+                contentStyle={{ background: '#131B2A', borderColor: 'var(--border-color)', borderRadius: '8px', color: '#F8FAFC' }}
               />
               <Legend />
-              <Line type="monotone" dataKey="predicted_demand" name="Predicted Demand" stroke="#0D7F54" strokeWidth={2.5} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="actual_consumed" name="Actual Consumed" stroke="#0284C7" strokeWidth={2.5} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="predicted_demand" name="Predicted Demand" stroke="#38BDF8" strokeWidth={2.5} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="actual_consumed" name="Actual Consumed" stroke="#10B981" strokeWidth={2.5} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

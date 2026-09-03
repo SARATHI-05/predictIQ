@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { CheckCircle2, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { CheckCircle2, ArrowRight, Sparkles } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import api from '../services/api';
 
 const AccountVerified = () => {
   const [userEmail, setUserEmail] = useState('');
-  const [syncing, setSyncing] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     let isMounted = true;
@@ -28,8 +26,6 @@ const AccountVerified = () => {
         }
       } catch (err) {
         console.warn('[AccountVerified] Verification session notice:', err);
-      } finally {
-        if (isMounted) setSyncing(false);
       }
     };
 
@@ -46,18 +42,17 @@ const AccountVerified = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #F0FDF4 0%, #F4F6F8 100%)',
+      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
-      <div className="card animate-fade-in" style={{
+      <div className="glass-card animate-fade-in" style={{
         width: '100%',
         maxWidth: '480px',
         padding: '2.5rem',
-        borderRadius: '16px',
-        background: '#FFFFFF',
-        border: '1px solid var(--border-color)',
-        boxShadow: 'var(--shadow-dropdown)',
+        borderRadius: '1.25rem',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
         textAlign: 'center'
       }}>
         {/* Success Icon */}

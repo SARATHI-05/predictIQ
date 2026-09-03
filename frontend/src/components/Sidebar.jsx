@@ -1,82 +1,116 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Radio,
   UtensilsCrossed, 
-  TrendingUp,
-  Trash2, 
-  Boxes,
-  Bell, 
-  FileSpreadsheet, 
-  Settings,
-  Target,
-  Cpu,
-  Users,
-  Shield,
-  UploadCloud,
+  UploadCloud, 
+  BrainCircuit, 
+  Boxes, 
   Package,
-  Layers,
-  ChevronDown,
-  ChevronRight,
-  Menu,
+  Trash2, 
+  BarChart3, 
+  Cpu,
+  Target,
+  FileSpreadsheet, 
+  Bell,
+  BellRing, 
+  Shield, 
+  Users, 
+  Settings, 
+  Sparkles,
+  ShieldCheck,
+  UserCheck,
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNav } from '../context/NavContext';
-import api from '../services/api';
 
 const Sidebar = () => {
   const { user } = useAuth();
   const { isMobileNavOpen, closeMobileNav } = useNav();
   const isAdmin = user?.role === 'Admin';
-  const [alertCount, setAlertCount] = useState(4);
-  const [showAdminSubmenu, setShowAdminSubmenu] = useState(true);
 
-  useEffect(() => {
-    const fetchUnreadCount = async () => {
-      try {
-        const res = await api.get('/api/notifications/unread-count');
-        if (typeof res.data?.unread_count === 'number') {
-          setAlertCount(res.data.unread_count);
-        }
-      } catch {
-        // Keep fallback 4 from screenshot
-      }
-    };
-    fetchUnreadCount();
-
-    const handleUpdate = () => fetchUnreadCount();
-    window.addEventListener('predictiq-notification-update', handleUpdate);
-    return () => window.removeEventListener('predictiq-notification-update', handleUpdate);
-  }, []);
-
-  // Primary Operations Navigation matching reference screenshot
-  const operationsNav = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/predictions', label: 'AI Demand Prediction', icon: Radio },
-    { to: '/food-records', label: 'Food Records', icon: UtensilsCrossed },
-    { to: '/analytics', label: 'Analytics', icon: TrendingUp },
-    { to: '/wastage', label: 'Wastage Management', icon: Trash2 },
-    { to: '/resource-planning', label: 'Resource Management', icon: Boxes },
-  ];
-
-  // Administration Navigation matching reference screenshot
-  const adminNav = [
-    { to: '/alerts', label: 'Alerts & Notifications', icon: Bell, badge: alertCount },
-    { to: '/reports', label: 'Reports', icon: FileSpreadsheet },
-    { to: '/settings', label: 'Settings', icon: Settings },
-  ];
-
-  // Advanced / System Tools (Preserved for full admin management)
-  const advancedSystemNav = [
-    { to: '/inventory', label: 'Inventory & Stock', icon: Package },
+  const operationalNav = [
+    { to: '/dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
+    { to: '/food-records', label: 'Food Log Records', icon: UtensilsCrossed },
     { to: '/dataset-upload', label: 'Dataset Ingestion', icon: UploadCloud },
-    { to: '/prediction-accuracy', label: 'Accuracy Tracking', icon: Target },
-    { to: '/model-performance', label: 'ML Performance', icon: Cpu },
-    { to: '/user-management', label: 'User Management', icon: Users },
-    { to: '/audit-logs', label: 'Security Audit Logs', icon: Shield },
+    { to: '/inventory', label: 'Inventory & Stock', icon: Package },
+    { to: '/alerts', label: 'Surplus Alerts', icon: BellRing },
   ];
+
+  const intelligenceNav = [
+    { to: '/predictions', label: 'AI Demand Forecast', icon: BrainCircuit },
+    { to: '/resource-planning', label: 'Resource Planning', icon: Boxes },
+    { to: '/wastage', label: 'Wastage Analysis', icon: Trash2 },
+    { to: '/analytics', label: 'Operational Analytics', icon: BarChart3 },
+  ];
+
+  const managementNav = [
+    { to: '/reports', label: 'Reports & Export', icon: FileSpreadsheet },
+    { to: '/notifications', label: 'Notification Center', icon: Bell },
+  ];
+
+  const adminNav = [
+    { to: '/prediction-accuracy', label: 'Accuracy Tracking', icon: Target },
+    { to: '/model-performance', label: 'ML Model Metrics', icon: Cpu },
+    { to: '/settings', label: 'Settings & Operations', icon: Settings },
+    { to: '/user-management', label: 'User Management', icon: Users },
+    { to: '/audit-logs', label: 'Audit Security Log', icon: Shield },
+  ];
+
+  const renderNavSection = (title, items) => (
+    <div style={{ marginBottom: '1rem' }}>
+      <div style={{
+        fontSize: '0.68rem',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        fontWeight: 700,
+        color: 'var(--text-muted)',
+        padding: '0.4rem 0.85rem 0.35rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <span>{title}</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={closeMobileNav}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.6rem 0.85rem',
+                borderRadius: '0.55rem',
+                fontSize: '0.84rem',
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
+                backgroundColor: isActive ? 'rgba(16, 185, 129, 0.16)' : 'transparent',
+                border: isActive ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid transparent',
+                textDecoration: 'none',
+                transition: 'all 0.15s ease',
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Icon size={18} color={isActive ? 'var(--accent-primary)' : '#94A3B8'} />
+                    <span>{item.label}</span>
+                  </div>
+                  {isActive && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-primary)' }} />}
+                </>
+              )}
+            </NavLink>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -89,177 +123,113 @@ const Sidebar = () => {
 
       {/* Main Sidebar Drawer */}
       <aside className={`app-sidebar ${isMobileNavOpen ? 'open' : ''}`}>
-        {/* Brand Header with Exact Screenshot Logo & Toggle */}
-        <div className="sidebar-brand-header">
-          <NavLink to="/dashboard" className="sidebar-brand-logo" onClick={closeMobileNav}>
-            <div className="brand-icon-box">
-              {/* Custom squiggly waveform IQ icon matching reference */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12h3l3-7 4 14 3-7h5" />
-              </svg>
+        {/* Brand Header with Mobile Close Button */}
+        <div style={{
+          padding: '1.15rem 1.25rem',
+          borderBottom: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: '#0B1120'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #10B981 0%, #0284C7 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 'var(--shadow-glow)',
+              flexShrink: 0
+            }}>
+              <Sparkles size={19} color="#FFFFFF" />
             </div>
-            <span className="brand-title-text">PredictIQ</span>
-          </NavLink>
-
-          {/* Desktop Toggle Visual & Mobile Close Button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <button
-              type="button"
-              className="sidebar-collapse-btn"
-              title="Toggle sidebar"
-              aria-label="Toggle navigation"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="4" y1="6" x2="20" y2="6" />
-                <line x1="4" y1="12" x2="14" y2="12" />
-                <line x1="4" y1="18" x2="18" y2="18" />
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              onClick={closeMobileNav}
-              className="sidebar-close-btn"
-              aria-label="Close navigation drawer"
-            >
-              <X size={18} />
-            </button>
+            <div>
+              <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+                Predict<span style={{ color: 'var(--accent-primary)' }}>IQ</span>
+              </h1>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                AI Food Planning
+              </div>
+            </div>
           </div>
+
+          {/* Close Button on Mobile Drawer */}
+          <button
+            type="button"
+            onClick={closeMobileNav}
+            className="sidebar-close-btn"
+            aria-label="Close navigation drawer"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* Navigation Scroll Area */}
-        <nav className="sidebar-nav-scroll">
-          {/* Section 1: OPERATIONS HUB */}
-          <div>
-            <div className="sidebar-nav-heading">
-              OPERATIONS HUB
-            </div>
-            <div className="sidebar-nav-group">
-              {operationsNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={closeMobileNav}
-                    className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
-                  >
-                    {({ isActive }) => (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Icon size={18} color={isActive ? '#FFFFFF' : '#6B7280'} />
-                        <span>{item.label}</span>
-                      </div>
-                    )}
-                  </NavLink>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Section 2: ADMINISTRATION */}
-          <div>
-            <div className="sidebar-nav-heading">
-              ADMINISTRATION
-            </div>
-            <div className="sidebar-nav-group">
-              {adminNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={closeMobileNav}
-                    className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <Icon size={18} color={isActive ? '#FFFFFF' : '#6B7280'} />
-                          <span>{item.label}</span>
-                        </div>
-                        {item.badge !== undefined && item.badge > 0 && (
-                          <span style={{
-                            background: isActive ? '#FFFFFF' : '#FEE2E2',
-                            color: isActive ? '#0D7F54' : '#EF4444',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            padding: '0.1rem 0.45rem',
-                            borderRadius: '9999px',
-                            minWidth: '18px',
-                            textAlign: 'center'
-                          }}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </NavLink>
-                );
-              })}
-
-              {/* Advanced System Management for Admins */}
-              {isAdmin && (
-                <div style={{ marginTop: '0.35rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowAdminSubmenu(!showAdminSubmenu)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      background: 'none',
-                      border: 'none',
-                      color: '#9CA3AF',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      borderRadius: '6px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em'
-                    }}
-                  >
-                    <span>System Tools</span>
-                    {showAdminSubmenu ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  </button>
-
-                  {showAdminSubmenu && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', marginTop: '0.2rem', paddingLeft: '0.35rem' }}>
-                      {advancedSystemNav.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <NavLink
-                            key={item.to}
-                            to={item.to}
-                            onClick={closeMobileNav}
-                            className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
-                            style={{ fontSize: '0.8rem', padding: '0.5rem 0.65rem' }}
-                          >
-                            {({ isActive }) => (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                                <Icon size={16} color={isActive ? '#FFFFFF' : '#6B7280'} />
-                                <span>{item.label}</span>
-                              </div>
-                            )}
-                          </NavLink>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Navigation Groups */}
+        <nav style={{
+          flex: 1,
+          padding: '0.85rem 0.75rem',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          {renderNavSection('Operations', operationalNav)}
+          {renderNavSection('AI & Intelligence', intelligenceNav)}
+          {renderNavSection('Reports & Center', managementNav)}
+          {isAdmin && renderNavSection('Administration & ML', adminNav)}
         </nav>
 
-        {/* Bottom System Status Card matching reference screenshot */}
-        <div className="sidebar-status-card">
-          <div>
-            <div className="sidebar-status-label">System Status</div>
-            <div className="sidebar-status-value">Precision Engine 4.2</div>
+        {/* User Role Card */}
+        <div style={{
+          padding: '0.85rem 1rem',
+          borderTop: '1px solid var(--border-color)',
+          background: '#0B1120'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: '34px',
+              height: '34px',
+              borderRadius: '50%',
+              background: user?.role === 'Admin' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+              border: `1px solid ${user?.role === 'Admin' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: user?.role === 'Admin' ? '#38BDF8' : '#34D399',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              flexShrink: 0
+            }}>
+              {(() => {
+                const displayName = (user?.name && user.name !== 'PredictIQ User') ? user.name : (user?.email ? user.email.split('@')[0] : 'U');
+                return displayName.charAt(0).toUpperCase();
+              })()}
+            </div>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <div style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {(() => {
+                  if (user?.name && user.name !== 'PredictIQ User') return user.name;
+                  if (user?.email) {
+                    return user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                  }
+                  return 'PredictIQ User';
+                })()}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
+                {user?.role === 'Admin' ? (
+                  <ShieldCheck size={12} color="#38BDF8" />
+                ) : (
+                  <UserCheck size={12} color="#34D399" />
+                )}
+                <span className={`badge ${user?.role === 'Admin' ? 'badge-cyan' : 'badge-emerald'}`} style={{ padding: '0.1rem 0.4rem', fontSize: '0.625rem' }}>
+                  {user?.role || 'Staff'}
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="status-dot-pulse" title="System Status: Optimal Demand Engine Operational" />
         </div>
       </aside>
     </>

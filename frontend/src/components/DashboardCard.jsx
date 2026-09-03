@@ -1,89 +1,100 @@
 import React from 'react';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 
 const DashboardCard = ({
   title,
   value,
-  unit = '',
   subtitle,
   icon: Icon,
   trend,
-  trendType = 'positive', // 'positive' | 'negative'
-  accentColor = 'emerald', // 'emerald' | 'blue' | 'cyan' | 'purple' | 'amber' | 'rose'
-  badgeText,
-  badgeType = 'green', // 'green' | 'blue' | 'cyan' | 'rose'
-  metaText,
+  trendType = 'positive', // 'positive' or 'negative'
+  accentColor = 'emerald', // 'emerald', 'cyan', 'amber', 'rose', 'purple'
 }) => {
-  // Pastel icon container styles matching reference screenshot
-  const getIconStyles = () => {
+  const getAccentStyles = () => {
     switch (accentColor) {
-      case 'blue':
-        return { bg: '#EFF6FF', color: '#1D4ED8' };
       case 'cyan':
-        return { bg: '#ECFEFF', color: '#0891B2' };
-      case 'purple':
-        return { bg: '#FAF5FF', color: '#7C3AED' };
+        return {
+          bg: 'rgba(6, 182, 212, 0.12)',
+          border: 'rgba(6, 182, 212, 0.25)',
+          color: '#22D3EE',
+        };
       case 'amber':
-        return { bg: '#FFFBEB', color: '#D97706' };
+        return {
+          bg: 'rgba(245, 158, 11, 0.12)',
+          border: 'rgba(245, 158, 11, 0.25)',
+          color: '#FBBF24',
+        };
       case 'rose':
-        return { bg: '#FEF2F2', color: '#DC2626' };
+        return {
+          bg: 'rgba(244, 63, 94, 0.12)',
+          border: 'rgba(244, 63, 94, 0.25)',
+          color: '#FB7185',
+        };
+      case 'purple':
+        return {
+          bg: 'rgba(139, 92, 246, 0.12)',
+          border: 'rgba(139, 92, 246, 0.25)',
+          color: '#A78BFA',
+        };
       case 'emerald':
       default:
-        return { bg: '#EBF7EE', color: '#0D7F54' };
+        return {
+          bg: 'rgba(16, 185, 129, 0.12)',
+          border: 'rgba(16, 185, 129, 0.25)',
+          color: '#34D399',
+        };
     }
   };
 
-  const iconStyle = getIconStyles();
-
-  // Parse value and unit if provided combined (e.g. "3,850 kg" or "$14,820" or "38.4 %")
-  let displayValue = value;
-  let displayUnit = unit;
-
-  if (typeof value === 'string' && !unit) {
-    const parts = value.trim().split(' ');
-    if (parts.length > 1) {
-      displayValue = parts[0];
-      displayUnit = parts.slice(1).join(' ');
-    }
-  }
+  const accent = getAccentStyles();
 
   return (
-    <div className="kpi-card">
-      {/* Top Row: Uppercase Title & Pastel Icon Pill */}
-      <div className="kpi-header">
-        <span className="kpi-title">{title}</span>
+    <div className="glass-card glass-card-interactive" style={{ padding: '1.35rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          {title}
+        </div>
         {Icon && (
-          <div
-            className="kpi-icon-pill"
-            style={{ backgroundColor: iconStyle.bg, color: iconStyle.color }}
-          >
-            <Icon size={18} />
+          <div style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '10px',
+            background: accent.bg,
+            border: `1px solid ${accent.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: accent.color
+          }}>
+            <Icon size={20} />
           </div>
         )}
       </div>
 
-      {/* Metric Figure with Unit */}
-      <div className="kpi-value-row">
-        <span className="kpi-value">{displayValue}</span>
-        {displayUnit && <span className="kpi-unit">{displayUnit}</span>}
+      <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+        <div style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
+          {value}
+        </div>
+        {trend && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.2rem',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: trendType === 'positive' ? '#34D399' : '#FB7185'
+          }}>
+            {trendType === 'positive' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+            <span>{trend}</span>
+          </div>
+        )}
       </div>
 
-      {/* Footer: Trend Pill / Status Badge + Comparison Meta Text */}
-      <div className="kpi-footer">
-        {badgeText ? (
-          <span className={`kpi-badge kpi-badge-${badgeType}`}>
-            {badgeText}
-          </span>
-        ) : trend ? (
-          <span className={`kpi-badge ${trendType === 'positive' ? 'kpi-badge-green' : 'kpi-badge-rose'}`}>
-            {trendType === 'positive' ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
-            {trend}
-          </span>
-        ) : null}
-
-        {metaText && <span className="kpi-meta-text">{metaText}</span>}
-        {!metaText && subtitle && <span className="kpi-meta-text">{subtitle}</span>}
-      </div>
+      {subtitle && (
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+          {subtitle}
+        </div>
+      )}
     </div>
   );
 };

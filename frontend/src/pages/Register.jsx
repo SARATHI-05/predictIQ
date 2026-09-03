@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -9,8 +9,8 @@ import {
   AlertCircle, 
   Eye, 
   EyeOff,
-  CheckCircle2,
-  Inbox
+  Inbox,
+  X
 } from 'lucide-react';
 import GoogleLogin from '../components/GoogleLogin';
 import { supabase } from '../supabaseClient';
@@ -45,7 +45,7 @@ const Register = () => {
       const verificationRedirectUrl = `${window.location.origin}/account-verified`;
 
       // 1. Register with Supabase Auth (Dispatches verification email with redirect to /account-verified)
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password: password,
         options: {
@@ -87,18 +87,17 @@ const Register = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #F0FDF4 0%, #F4F6F8 100%)',
+      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
-      <div className="card animate-fade-in" style={{
+      <div className="glass-card animate-fade-in" style={{
         width: '100%',
         maxWidth: '460px',
         padding: '2.5rem',
-        borderRadius: '16px',
-        background: '#FFFFFF',
-        border: '1px solid var(--border-color)',
-        boxShadow: 'var(--shadow-dropdown)'
+        borderRadius: '1.25rem',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
       }}>
         {emailSent ? (
           /* Email Verification Sent Screen */
@@ -154,19 +153,17 @@ const Register = () => {
             {/* Logo Header */}
             <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
               <div style={{
-                width: '52px',
-                height: '52px',
+                width: '54px',
+                height: '54px',
                 borderRadius: '14px',
-                background: 'var(--brand-primary)',
+                background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(13, 127, 84, 0.3)',
+                boxShadow: 'var(--shadow-glow)',
                 marginBottom: '0.85rem'
               }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 12h3l3-7 4 14 3-7h5" />
-                </svg>
+                <Sparkles size={30} color="#FFFFFF" />
               </div>
 
               <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -214,7 +211,10 @@ const Register = () => {
                     className="form-control"
                     placeholder="e.g. John Doe"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (error) setError('');
+                    }}
                     style={{ paddingLeft: '2.5rem' }}
                   />
                   <User size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
@@ -231,7 +231,10 @@ const Register = () => {
                     className="form-control"
                     placeholder="name@organization.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error) setError('');
+                    }}
                     style={{ paddingLeft: '2.5rem' }}
                   />
                   <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
@@ -248,7 +251,10 @@ const Register = () => {
                     className="form-control"
                     placeholder="Minimum 6 characters"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError('');
+                    }}
                     style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                   />
                   <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
@@ -294,12 +300,33 @@ const Register = () => {
                   fontSize: '0.825rem',
                   marginTop: '1rem',
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   gap: '0.5rem',
                   lineHeight: 1.4
                 }}>
-                  <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <span>{error}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span>{error}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setError('')}
+                    title="Clear error"
+                    aria-label="Dismiss error"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#FB7185',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      opacity: 0.8
+                    }}
+                  >
+                    <X size={15} />
+                  </button>
                 </div>
               )}
             </form>

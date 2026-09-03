@@ -15,8 +15,8 @@ const DataTable = ({
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '3rem', color: '#6B7280' }}>
-        <div className="pulse-indicator" style={{ fontSize: '0.9rem', fontWeight: 600 }}>Loading live data...</div>
+      <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+        <div className="pulse-indicator" style={{ fontSize: '1rem', fontWeight: 600 }}>Loading data...</div>
       </div>
     );
   }
@@ -25,25 +25,22 @@ const DataTable = ({
     return (
       <div style={{
         textAlign: 'center',
-        padding: '3rem 1rem',
+        padding: '3.5rem 1rem',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '0.75rem',
-        background: '#FFFFFF',
-        borderRadius: '12px',
-        border: '1px dashed #E5E7EB',
-        color: '#6B7280'
+        color: 'var(--text-muted)'
       }}>
-        <Inbox size={36} color="#9CA3AF" strokeWidth={1.5} />
-        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#374151' }}>{emptyMessage}</div>
+        <Inbox size={40} strokeWidth={1.5} />
+        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{emptyMessage}</div>
       </div>
     );
   }
 
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
-      <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+    <div>
+      <div className="table-container">
         <table className="data-table">
           <thead>
             <tr>
@@ -74,11 +71,10 @@ const DataTable = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '0.85rem 1.25rem',
+          padding: '1rem 0.5rem 0',
           fontSize: '0.8125rem',
-          color: '#6B7280',
-          borderTop: '1px solid var(--border-color)',
-          background: '#FAFAFA'
+          color: 'var(--text-secondary)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)'
         }}>
           <div>
             Showing <b>{(page - 1) * pageSize + 1}</b> to <b>{Math.min(page * pageSize, total)}</b> of <b>{total}</b> entries
@@ -88,22 +84,22 @@ const DataTable = ({
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
               className="btn btn-secondary"
-              style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem', opacity: page <= 1 ? 0.4 : 1, minHeight: '32px' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', opacity: page <= 1 ? 0.4 : 1 }}
             >
-              <ChevronLeft size={15} />
+              <ChevronLeft size={16} />
               <span>Previous</span>
             </button>
-            <span style={{ fontWeight: 700, color: '#111827' }}>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
               className="btn btn-secondary"
-              style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem', opacity: page >= totalPages ? 0.4 : 1, minHeight: '32px' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', opacity: page >= totalPages ? 0.4 : 1 }}
             >
               <span>Next</span>
-              <ChevronRight size={15} />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>
