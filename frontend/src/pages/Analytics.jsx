@@ -136,14 +136,14 @@ const Analytics = () => {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={insights?.day_averages || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="day" stroke="#64748B" fontSize={11} />
-              <YAxis stroke="#64748B" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="day" stroke="#94A3B8" fontSize={11} />
+              <YAxis stroke="#94A3B8" fontSize={11} />
               <Tooltip
-                contentStyle={{ background: '#131B2A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '0.5rem', color: '#FFFFFF' }}
               />
               <Legend verticalAlign="top" height={36} />
-              <Bar dataKey="avg_demand" name="Avg Demand (Meals)" fill="#10B981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="avg_demand" name="Avg Demand (Meals)" fill="#0D7F54" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -155,15 +155,15 @@ const Analytics = () => {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={insights?.weather_demand_impact || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="weather" stroke="#64748B" fontSize={11} />
-              <YAxis stroke="#64748B" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="weather" stroke="#94A3B8" fontSize={11} />
+              <YAxis stroke="#94A3B8" fontSize={11} />
               <Tooltip
-                contentStyle={{ background: '#131B2A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '0.5rem', color: '#FFFFFF' }}
               />
               <Legend verticalAlign="top" height={36} />
-              <Bar dataKey="avg_demand" name="Avg Demand" fill="#38BDF8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="avg_waste" name="Avg Leftover" fill="#F43F5E" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="avg_demand" name="Avg Demand" fill="#0284C7" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="avg_waste" name="Avg Leftover" fill="#EF4444" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>

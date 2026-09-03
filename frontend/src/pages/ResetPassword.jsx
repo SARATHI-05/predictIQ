@@ -103,32 +103,33 @@ const ResetPassword = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
+      background: 'radial-gradient(ellipse at top, #F0FDF4 0%, #F4F6F8 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
-      <div className="glass-card animate-fade-in" style={{
+      <div className="card animate-fade-in" style={{
         width: '100%',
         maxWidth: '460px',
         padding: '2.5rem',
-        borderRadius: '1.25rem',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
+        borderRadius: '16px',
+        background: '#FFFFFF',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-dropdown)'
       }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
-            width: '54px',
-            height: '54px',
+            width: '52px',
+            height: '52px',
             borderRadius: '14px',
-            background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
+            background: 'var(--brand-primary)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'var(--shadow-glow)',
+            boxShadow: '0 4px 14px rgba(13, 127, 84, 0.3)',
             marginBottom: '1rem'
           }}>
-            <ShieldCheck size={28} color="#FFFFFF" />
+            <ShieldCheck size={26} color="#FFFFFF" />
           </div>
           <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Set New Password

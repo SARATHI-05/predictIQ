@@ -307,7 +307,7 @@ const Settings = () => {
         </h3>
 
         <div className="grid-cols-3" style={{ gap: '1.5rem', fontSize: '0.85rem' }}>
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#F9FAFB', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Current User</div>
             <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.25rem' }}>
               {user?.name || 'Administrator'}
@@ -317,9 +317,9 @@ const Settings = () => {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#F9FAFB', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Security & RBAC</div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#38BDF8', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0284C7', marginTop: '0.25rem' }}>
               {user?.role || 'Staff'} Privileges
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
@@ -327,9 +327,9 @@ const Settings = () => {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#F9FAFB', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Database Backend</div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#34D399', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0D7F54', marginTop: '0.25rem' }}>
               SQLAlchemy ORM
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>

@@ -13,6 +13,7 @@ ml_dir = os.path.join(root_dir, "ml")
 if ml_dir not in sys.path:
     sys.path.append(ml_dir)
 
+# pyrefly: ignore [missing-import]
 from predict import predict_demand as ml_predict_demand
 
 def run_prediction(db: Session, request_data: dict, save_to_db: bool = True) -> dict:

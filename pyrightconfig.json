@@ -1,0 +1,12 @@
+{
+  "extraPaths": [
+    "backend",
+    ".",
+    "ml"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "dist"
+  ]
+}

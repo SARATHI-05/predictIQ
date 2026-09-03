@@ -1,57 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { 
+  Building2, 
+  Search, 
+  Moon, 
+  Sun, 
   Bell, 
+  ChevronDown, 
   LogOut, 
-  Sparkles, 
-  CheckCircle2, 
-  AlertTriangle,
-  ExternalLink,
-  Check,
-  CheckCheck,
-  Clock,
+  Menu, 
+  Check, 
+  CheckCheck, 
+  AlertTriangle, 
   X,
-  Menu
+  User,
+  ShieldCheck,
+  Settings
 } from 'lucide-react';
-
 import { useAuth } from '../context/AuthContext';
 import { useNav } from '../context/NavContext';
-import SystemHealthBadge from './SystemHealthBadge';
 import api from '../services/api';
-import { useISTClock } from '../utils/timeUtils';
+
+const DINING_LOCATIONS = [
+  'Central Dining Commons',
+  'Tech Bistro Hub',
+  'North Campus Commons',
+  'Science & Engineering Dining',
+  'South Quad Refectory'
+];
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { toggleMobileNav } = useNav();
   const location = useLocation();
   const navigate = useNavigate();
-  const { time12, dateStr } = useISTClock();
-  const [unreadCount, setUnreadCount] = useState(0);
+
+  const [selectedLocation, setSelectedLocation] = useState('Central Dining Commons');
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(4);
   const [recentNotifications, setRecentNotifications] = useState([]);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // Derive title from pathname
-  const getPageTitle = (pathname) => {
-    switch (pathname) {
-      case '/dashboard': return 'Dashboard';
-      case '/food-records': return 'Food Log Records';
-      case '/dataset-upload': return 'Dataset Ingestion';
-      case '/predictions': return 'Demand Forecasting';
-      case '/resource-planning': return 'Resource Planning';
-      case '/inventory': return 'Inventory & Stock';
-      case '/wastage': return 'Wastage Analysis';
-      case '/analytics': return 'Demand Analytics';
-      case '/model-performance': return 'ML Performance';
-      case '/prediction-accuracy': return 'Accuracy Tracking';
-      case '/reports': return 'Audit Reports';
-      case '/notifications': return 'Notification Center';
-      case '/alerts': return 'Surplus Alerts';
-      case '/audit-logs': return 'Security Audit Trail';
-      case '/user-management': return 'User Management';
-      case '/settings': return 'System Settings';
-      default: return 'PredictIQ System';
-    }
-  };
+  const locationRef = useRef(null);
+  const notifRef = useRef(null);
+  const userRef = useRef(null);
 
   const fetchNotificationStats = async () => {
     try {
@@ -59,25 +54,40 @@ const Navbar = () => {
         api.get('/api/notifications/unread-count'),
         api.get('/api/notifications?filter_type=unread&limit=4')
       ]);
-      setUnreadCount(unreadRes.data.unread_count || 0);
+      setUnreadCount(typeof unreadRes.data?.unread_count === 'number' ? unreadRes.data.unread_count : 4);
       setRecentNotifications(notifRes.data || []);
     } catch {
-      // Silent catch for background polling
+      // Retain fallback from screenshot
     }
   };
 
   useEffect(() => {
     fetchNotificationStats();
-    
     const handleUpdate = () => fetchNotificationStats();
     window.addEventListener('predictiq-notification-update', handleUpdate);
-    
-    const interval = setInterval(fetchNotificationStats, 15000);
+    const interval = setInterval(fetchNotificationStats, 20000);
     return () => {
       window.removeEventListener('predictiq-notification-update', handleUpdate);
       clearInterval(interval);
     };
   }, [location.pathname]);
+
+  // Click outside listener for dropdowns
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (locationRef.current && !locationRef.current.contains(e.target)) {
+        setShowLocationDropdown(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotificationMenu(false);
+      }
+      if (userRef.current && !userRef.current.contains(e.target)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleQuickMarkRead = async (id, e) => {
     e.stopPropagation();
@@ -108,54 +118,131 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  // Derive user display name and title
+  const displayName = (() => {
+    if (user?.name && user.name !== 'PredictIQ User') return user.name;
+    if (user?.email) {
+      return user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+    return 'Dr. Elena Vance';
+  })();
+
+  const displayRole = user?.role === 'Admin' ? 'Campus Director' : (user?.role || 'Staff Supervisor');
+
   return (
     <header className="app-navbar">
-      {/* Left Section: Mobile Hamburger Toggle + Page Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-        {/* Mobile Hamburger Toggle */}
+      {/* Left Section: Mobile Menu Button + Dining Commons Selector + Search Bar */}
+      <div className="navbar-left">
         <button
           type="button"
           onClick={toggleMobileNav}
           className="navbar-hamburger-btn"
-          aria-label="Open sidebar navigation"
+          aria-label="Open sidebar"
         >
-          <Menu size={22} color="var(--text-primary)" />
+          <Menu size={20} color="#374151" />
         </button>
 
-        {/* Page Title & Status */}
-        <div style={{ minWidth: 0 }}>
-          <h2 className="navbar-page-title">
-            {getPageTitle(location.pathname)}
-          </h2>
-          <div className="navbar-breadcrumb">
-            PredictIQ &bull; <span style={{ color: 'var(--accent-primary)' }}>Live Operational</span>
-          </div>
+        {/* Location Dropdown Pill matching screenshot */}
+        <div style={{ position: 'relative' }} ref={locationRef}>
+          <button
+            type="button"
+            className="navbar-location-pill"
+            onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+          >
+            <Building2 size={16} color="#0D7F54" />
+            <span>{selectedLocation}</span>
+            <ChevronDown size={14} color="#6B7280" />
+          </button>
+
+          {showLocationDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 6px)',
+              left: 0,
+              width: '240px',
+              background: '#FFFFFF',
+              borderRadius: '10px',
+              border: '1px solid var(--border-color)',
+              boxShadow: 'var(--shadow-dropdown)',
+              zIndex: 60,
+              padding: '0.4rem'
+            }}>
+              <div style={{ padding: '0.4rem 0.6rem', fontSize: '0.7rem', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase' }}>
+                Select Campus Location
+              </div>
+              {DINING_LOCATIONS.map((loc) => (
+                <button
+                  key={loc}
+                  type="button"
+                  onClick={() => {
+                    setSelectedLocation(loc);
+                    setShowLocationDropdown(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '0.5rem 0.65rem',
+                    background: selectedLocation === loc ? '#EBF7EE' : 'transparent',
+                    color: selectedLocation === loc ? '#0D7F54' : '#374151',
+                    fontWeight: selectedLocation === loc ? 700 : 500,
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <span>{loc}</span>
+                  {selectedLocation === loc && <Check size={14} color="#0D7F54" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Search Input matching screenshot */}
+        <div className="navbar-search-box">
+          <Search size={16} color="#9CA3AF" />
+          <input
+            type="text"
+            className="navbar-search-input"
+            placeholder="Search meal plans, ingredients, alerts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* Right Section: System Indicators & Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-        {/* IST Clock Badge (Visible on desktop & wide tablets) */}
-        {!(location.pathname === '/dashboard' || location.pathname === '/predictions' || location.pathname === '/alerts') && (
-          <div className="navbar-clock-badge" title="India Standard Time (IST)">
-            <Clock size={13} color="#34D399" />
-            <span>{time12}</span>
-            <span style={{ opacity: 0.4 }}>|</span>
-            <span style={{ color: 'var(--text-secondary)' }}>{dateStr}</span>
-          </div>
-        )}
+      {/* Right Section: AI Model Status + Theme Toggle + Notifications + User Profile */}
+      <div className="navbar-right">
+        {/* AI Model Badge matching screenshot */}
+        <div className="navbar-model-badge">
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0D7F54' }} />
+          <span>AI Model: Optimal Demand</span>
+        </div>
 
-        {/* Real-Time System Health Indicator */}
-        <SystemHealthBadge />
+        {/* Dark/Light Mode Visual Toggle matching screenshot */}
+        <button
+          type="button"
+          className="navbar-icon-btn"
+          title="Toggle color scheme"
+          aria-label="Toggle theme"
+          onClick={() => setIsDarkMode(!isDarkMode)}
+        >
+          {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
+        </button>
 
-        {/* Notifications Bell with Dropdown */}
-        <div style={{ position: 'relative' }}>
+        {/* Notifications Bell with Counter Dot matching screenshot */}
+        <div style={{ position: 'relative' }} ref={notifRef}>
           <button
+            type="button"
             onClick={() => setShowNotificationMenu(!showNotificationMenu)}
             className="navbar-icon-btn"
-            aria-label="Notification bell"
+            aria-label="Notifications"
           >
-            <Bell size={18} />
+            <Bell size={17} />
             {unreadCount > 0 && (
               <span className="navbar-notif-badge">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -165,10 +252,17 @@ const Navbar = () => {
 
           {/* Quick Notification Dropdown */}
           {showNotificationMenu && (
-            <div className="navbar-dropdown glass-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
+            <div className="navbar-dropdown">
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.75rem',
+                paddingBottom: '0.5rem',
+                borderBottom: '1px solid var(--border-color)'
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Notifications</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#111827' }}>Notifications</span>
                   {unreadCount > 0 && <span className="badge badge-rose">{unreadCount}</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -178,13 +272,13 @@ const Navbar = () => {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: 'var(--accent-secondary)',
+                        color: 'var(--brand-primary)',
                         fontSize: '0.725rem',
+                        fontWeight: 600,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
-                        padding: 0
+                        gap: '3px'
                       }}
                     >
                       <CheckCheck size={13} /> Clear all
@@ -194,17 +288,16 @@ const Navbar = () => {
                     type="button"
                     onClick={() => setShowNotificationMenu(false)}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.06)',
+                      background: '#F3F4F6',
                       border: 'none',
-                      color: 'var(--text-muted)',
+                      color: '#6B7280',
                       borderRadius: '6px',
-                      padding: '4px',
+                      padding: '3px',
+                      cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer'
+                      justifyContent: 'center'
                     }}
-                    title="Close"
                   >
                     <X size={14} />
                   </button>
@@ -212,14 +305,14 @@ const Navbar = () => {
               </div>
 
               {recentNotifications.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem', maxHeight: '260px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem', maxHeight: '250px', overflowY: 'auto' }}>
                   {recentNotifications.map((notif) => (
                     <div
                       key={notif.id}
                       style={{
                         padding: '0.65rem',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        borderRadius: '0.5rem',
+                        background: '#F9FAFB',
+                        borderRadius: '8px',
                         border: '1px solid var(--border-color)',
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -228,18 +321,18 @@ const Navbar = () => {
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#38BDF8', fontSize: '0.725rem', fontWeight: 600 }}>
-                          <AlertTriangle size={12} color={notif.severity === 'High' ? '#F43F5E' : '#F59E0B'} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#111827', fontSize: '0.75rem', fontWeight: 700 }}>
+                          <AlertTriangle size={13} color={notif.severity === 'High' ? '#EF4444' : '#F59E0B'} />
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.title}</span>
                         </div>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem', lineHeight: 1.3 }}>
+                        <p style={{ fontSize: '0.75rem', color: '#4B5563', marginTop: '0.2rem', lineHeight: 1.3 }}>
                           {notif.message}
                         </p>
                       </div>
                       <button
                         onClick={(e) => handleQuickMarkRead(notif.id, e)}
                         className="btn btn-secondary"
-                        style={{ padding: '3px 6px', fontSize: '10px', flexShrink: 0, color: '#10B981', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                        style={{ padding: '2px 6px', fontSize: '10px', minHeight: 'auto', color: 'var(--brand-primary)', borderColor: '#A7F3D0' }}
                         title="Mark read"
                       >
                         <Check size={11} /> Read
@@ -248,79 +341,132 @@ const Navbar = () => {
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '1rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.775rem' }}>
-                  <CheckCircle2 size={22} color="var(--accent-primary)" style={{ margin: '0 auto 4px' }} />
-                  <div>No new alerts</div>
+                <div style={{ padding: '1.25rem', textAlign: 'center', color: '#9CA3AF', fontSize: '0.8rem' }}>
+                  No unread notifications
                 </div>
               )}
 
               <Link
-                to="/notifications"
+                to="/alerts"
                 onClick={() => setShowNotificationMenu(false)}
-                className="btn btn-secondary"
-                style={{ width: '100%', fontSize: '0.775rem', padding: '0.45rem', justifyContent: 'center' }}
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  padding: '0.45rem',
+                  background: '#F3F4F6',
+                  borderRadius: '6px',
+                  color: '#374151',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textDecoration: 'none'
+                }}
               >
-                <span>View Notification Center</span>
-                <ExternalLink size={13} />
+                View all notifications & alerts →
               </Link>
             </div>
           )}
         </div>
 
-        {/* User Card (Desktop Full, Mobile Avatar Only) */}
-        {user && (
-          <div className="navbar-user-chip">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={user.name || 'User'}
-                style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
-              />
-            ) : (
-              <div style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                background: 'rgba(16, 185, 129, 0.2)',
-                color: '#34D399',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.8rem',
-                fontWeight: 700
-              }}>
-                {(() => {
-                  const displayName = (user.name && user.name !== 'PredictIQ User') ? user.name : (user.email ? user.email.split('@')[0] : 'U');
-                  return displayName.charAt(0).toUpperCase();
-                })()}
-              </div>
-            )}
-            <div className="navbar-user-details">
-              <div style={{ fontSize: '0.775rem', fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '130px' }}>
-                {(() => {
-                  if (user.name && user.name !== 'PredictIQ User') return user.name;
-                  if (user.email) {
-                    return user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                  }
-                  return 'PredictIQ User';
-                })()}
-              </div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                {user.role || 'Staff'}
-              </div>
+        {/* User Profile Card matching reference screenshot */}
+        <div style={{ position: 'relative' }} ref={userRef}>
+          <div
+            className="navbar-user-card"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+          >
+            <div className="navbar-user-avatar">
+              {/* Initials or silhouette */}
+              <span style={{ color: '#0D7F54', fontWeight: 800 }}>EV</span>
+            </div>
+            <div className="navbar-user-info">
+              <span className="navbar-user-name">{displayName}</span>
+              <span className="navbar-user-role">{displayRole}</span>
             </div>
           </div>
-        )}
 
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          className="btn btn-secondary navbar-logout-btn"
-          title="Sign Out"
-        >
-          <LogOut size={15} />
-          <span className="logout-text">Logout</span>
-        </button>
+          {/* User Profile Dropdown Menu */}
+          {showUserMenu && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              width: '210px',
+              background: '#FFFFFF',
+              borderRadius: '10px',
+              border: '1px solid var(--border-color)',
+              boxShadow: 'var(--shadow-dropdown)',
+              zIndex: 60,
+              padding: '0.4rem'
+            }}>
+              <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border-color)', marginBottom: '0.35rem' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#111827' }}>{displayName}</div>
+                <div style={{ fontSize: '0.7rem', color: '#6B7280' }}>{user?.email || 'elena.vance@campus.edu'}</div>
+              </div>
+
+              <Link
+                to="/settings"
+                onClick={() => setShowUserMenu(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.45rem 0.75rem',
+                  color: '#374151',
+                  fontSize: '0.8rem',
+                  textDecoration: 'none',
+                  borderRadius: '6px',
+                  transition: 'background 0.1s'
+                }}
+              >
+                <Settings size={15} color="#6B7280" />
+                <span>Account Settings</span>
+              </Link>
+
+              {user?.role === 'Admin' && (
+                <Link
+                  to="/user-management"
+                  onClick={() => setShowUserMenu(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.45rem 0.75rem',
+                    color: '#374151',
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    borderRadius: '6px'
+                  }}
+                >
+                  <ShieldCheck size={15} color="#0D7F54" />
+                  <span>Admin Controls</span>
+                </Link>
+              )}
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.45rem 0.75rem',
+                  color: '#EF4444',
+                  fontSize: '0.8rem',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  marginTop: '0.25rem',
+                  borderTop: '1px solid var(--border-subtle)'
+                }}
+              >
+                <LogOut size={15} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

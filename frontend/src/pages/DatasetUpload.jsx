@@ -474,11 +474,11 @@ const DatasetUpload = () => {
           <div style={{ flex: 1, minHeight: '220px' }}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={stats?.category_distribution || []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="category" stroke="var(--text-muted)" fontSize={11} />
-                <YAxis stroke="var(--text-muted)" fontSize={11} />
-                <Tooltip contentStyle={{ background: '#131B2A', borderColor: 'var(--border-color)', borderRadius: '8px', color: '#F8FAFC' }} />
-                <Bar dataKey="count" fill="#10B981" radius={[4, 4, 0, 0]} name="Records Count" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="category" stroke="#94A3B8" fontSize={11} />
+                <YAxis stroke="#94A3B8" fontSize={11} />
+                <Tooltip contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#FFFFFF' }} />
+                <Bar dataKey="count" fill="#0D7F54" radius={[4, 4, 0, 0]} name="Records Count" />
               </BarChart>
             </ResponsiveContainer>
           </div>

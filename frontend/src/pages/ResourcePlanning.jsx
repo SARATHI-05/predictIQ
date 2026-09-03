@@ -262,7 +262,7 @@ const ResourcePlanning = () => {
           </div>
 
           <div style={{
-            background: 'rgba(15, 23, 42, 0.8)',
+            background: '#F9FAFB',
             border: '1px solid var(--border-color)',
             borderRadius: '0.75rem',
             padding: '0.75rem 1.25rem',

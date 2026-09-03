@@ -18,30 +18,31 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
   const getIcon = () => {
     const typeStr = alert.alert_type?.toLowerCase() || '';
     if (typeStr.includes('surplus')) {
-      return <AlertTriangle size={20} color="#FB7185" />;
+      return <AlertTriangle size={18} color="#EF4444" />;
     } else if (typeStr.includes('shortage')) {
-      return <ShieldAlert size={20} color="#FBBF24" />;
+      return <ShieldAlert size={18} color="#D97706" />;
     } else {
-      return <Info size={20} color="#22D3EE" />;
+      return <Info size={18} color="#0284C7" />;
     }
   };
 
   const isSurplus = alert.alert_type?.toLowerCase().includes('surplus');
 
   return (
-    <div className="glass-card" style={{
-      padding: '1.25rem',
-      borderLeft: isSurplus ? '4px solid #F43F5E' : (alert.severity === 'High' ? '4px solid #F43F5E' : '4px solid #06B6D4'),
+    <div className="card" style={{
+      padding: '1.1rem 1.25rem',
+      borderLeft: isSurplus ? '4px solid #EF4444' : (alert.severity === 'High' ? '4px solid #EF4444' : '4px solid #0284C7'),
       opacity: alert.is_read ? 0.75 : 1,
+      background: alert.is_read ? '#FAFAFA' : '#FFFFFF',
       transition: 'all 0.2s ease'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.25rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: '0.85rem', flex: 1, minWidth: '260px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flex: 1, minWidth: '240px' }}>
           <div style={{
-            width: '38px',
-            height: '38px',
+            width: '36px',
+            height: '36px',
             borderRadius: '8px',
-            background: isSurplus ? 'rgba(244, 63, 94, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+            background: isSurplus ? '#FEF2F2' : '#EFF6FF',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -50,40 +51,39 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
             {getIcon()}
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: '#111827' }}>
                 {alert.alert_type} Alert
               </span>
               {getSeverityBadge()}
               {alert.is_read ? (
-                <span className="badge badge-emerald" style={{ fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <span className="badge badge-emerald" style={{ fontSize: '0.65rem' }}>
                   <Check size={10} /> Resolved
                 </span>
               ) : (
                 <span className="badge badge-rose" style={{ fontSize: '0.65rem' }}>Active</span>
               )}
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
+            <p style={{ fontSize: '0.8125rem', color: '#4B5563', lineHeight: 1.4, margin: 0 }}>
               {alert.message}
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0, flexWrap: 'wrap' }}>
           {isSurplus && onRouteDonation && (
             <button
               onClick={() => onRouteDonation(alert)}
               className="btn btn-primary"
               style={{
-                padding: '0.45rem 0.85rem',
+                padding: '0.35rem 0.75rem',
                 fontSize: '0.75rem',
-                background: 'linear-gradient(135deg, #06B6D4 0%, #0284C7 100%)',
-                boxShadow: '0 2px 8px rgba(6, 182, 212, 0.3)'
+                minHeight: '32px'
               }}
               title="Dispatch food donation to partner NGO"
             >
-              <HeartHandshake size={14} />
+              <HeartHandshake size={13} />
               <span>Route Donation</span>
             </button>
           )}
@@ -92,10 +92,10 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
             <button
               onClick={() => onMarkRead(alert.id)}
               className="btn btn-secondary"
-              style={{ padding: '0.45rem 0.8rem', fontSize: '0.75rem' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', minHeight: '32px' }}
               title="Acknowledge & Mark Resolved"
             >
-              <CheckCircle2 size={14} color="#10B981" />
+              <CheckCircle2 size={13} color="#0D7F54" />
               <span>Acknowledge</span>
             </button>
           )}
@@ -104,10 +104,10 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
             <button
               onClick={() => onMarkUnread(alert.id)}
               className="btn btn-secondary"
-              style={{ padding: '0.45rem 0.8rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', color: '#6B7280', minHeight: '32px' }}
               title="Re-open alert"
             >
-              <RotateCcw size={13} />
+              <RotateCcw size={12} />
               <span>Re-open</span>
             </button>
           )}
@@ -116,10 +116,10 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
             <button
               onClick={() => onDelete(alert.id)}
               className="btn btn-secondary"
-              style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', color: '#FDA4AF' }}
+              style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#DC2626', minHeight: '32px' }}
               title="Dismiss and delete alert"
             >
-              <Trash2 size={13} />
+              <Trash2 size={12} />
               <span>Dismiss</span>
             </button>
           )}

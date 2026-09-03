@@ -63,50 +63,53 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
+      background: 'radial-gradient(ellipse at top, #F0FDF4 0%, #F4F6F8 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
-      <div className="glass-card animate-fade-in" style={{
+      <div className="card animate-fade-in" style={{
         width: '100%',
         maxWidth: '440px',
         padding: '2.5rem',
-        borderRadius: '1.25rem',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
+        borderRadius: '16px',
+        background: '#FFFFFF',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-dropdown)'
       }}>
-        {/* Logo Header */}
+        {/* Logo Header matching screenshot brand */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)',
+            width: '52px',
+            height: '52px',
+            borderRadius: '14px',
+            background: 'var(--brand-primary)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'var(--shadow-glow)',
+            boxShadow: '0 4px 14px rgba(13, 127, 84, 0.3)',
             marginBottom: '0.85rem'
           }}>
-            <Sparkles size={32} color="#FFFFFF" />
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12h3l3-7 4 14 3-7h5" />
+            </svg>
           </div>
-          <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            Predict<span style={{ color: 'var(--accent-primary)' }}>IQ</span>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#111827', letterSpacing: '-0.025em' }}>
+            Predict<span style={{ color: 'var(--brand-primary)' }}>IQ</span>
           </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-            AI-Based Food Demand & Resource Planning
+          <p style={{ fontSize: '0.84rem', color: '#6B7280', marginTop: '0.3rem' }}>
+            AI Culinary Demand & Campus Resource Planning
           </p>
         </div>
 
-        {/* Success Alert Above Form (When coming from successful signup) */}
+        {/* Success Alert Above Form */}
         {successMsg && (
           <div style={{
             padding: '0.85rem 1rem',
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            borderRadius: '0.75rem',
-            color: '#34D399',
-            fontSize: '0.825rem',
+            background: '#EBF7EE',
+            border: '1px solid #A7F3D0',
+            borderRadius: '8px',
+            color: '#0D7F54',
+            fontSize: '0.8125rem',
             marginBottom: '1.25rem',
             display: 'flex',
             alignItems: 'flex-start',
@@ -133,8 +136,8 @@ const Login = () => {
           alignItems: 'center',
           gap: '0.75rem',
           margin: '1.25rem 0',
-          color: 'var(--text-muted)',
-          fontSize: '0.75rem',
+          color: '#9CA3AF',
+          fontSize: '0.725rem',
           textTransform: 'uppercase',
           letterSpacing: '0.05em'
         }}>
@@ -158,7 +161,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 style={{ paddingLeft: '2.5rem' }}
               />
-              <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Mail size={16} color="#9CA3AF" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
           </div>
 
@@ -169,9 +172,9 @@ const Login = () => {
                 to="/forgot-password"
                 style={{
                   fontSize: '0.75rem',
-                  color: 'var(--accent-primary)',
+                  color: 'var(--brand-primary)',
                   textDecoration: 'none',
-                  fontWeight: 500
+                  fontWeight: 600
                 }}
               >
                 Forgot password?
@@ -189,7 +192,7 @@ const Login = () => {
                 style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
               />
 
-              <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Lock size={16} color="#9CA3AF" style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)' }} />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -200,7 +203,7 @@ const Login = () => {
                   transform: 'translateY(-50%)',
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text-muted)',
+                  color: '#9CA3AF',
                   cursor: 'pointer',
                   padding: 0
                 }}
@@ -215,7 +218,7 @@ const Login = () => {
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
+            style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem' }}
           >
             {loading ? 'Signing in...' : 'Sign In'}
             {!loading && <ArrowRight size={16} />}
@@ -225,11 +228,11 @@ const Login = () => {
           {error && (
             <div style={{
               padding: '0.75rem 1rem',
-              background: 'rgba(244, 63, 94, 0.15)',
-              border: '1px solid rgba(244, 63, 94, 0.3)',
-              borderRadius: '0.75rem',
-              color: '#FB7185',
-              fontSize: '0.825rem',
+              background: '#FEF2F2',
+              border: '1px solid #FECACA',
+              borderRadius: '8px',
+              color: '#DC2626',
+              fontSize: '0.8125rem',
               marginTop: '1rem',
               display: 'flex',
               alignItems: 'flex-start',
@@ -243,9 +246,9 @@ const Login = () => {
         </form>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: '1.75rem', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.8125rem', color: '#6B7280' }}>
           Don't have an account?{' '}
-          <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}>
+          <Link to="/register" style={{ color: 'var(--brand-primary)', fontWeight: 700, textDecoration: 'none' }}>
             Register here
           </Link>
         </div>

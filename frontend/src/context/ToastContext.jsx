@@ -52,16 +52,17 @@ export const ToastProvider = ({ children }) => {
               gap: '12px',
               padding: '14px 16px',
               borderRadius: '10px',
-              background: '#131B2A',
-              border: `1px solid ${
-                t.type === 'success' ? '#10B981' :
-                t.type === 'error' ? '#F43F5E' :
-                t.type === 'warning' ? '#F59E0B' : '#38BDF8'
+              background: '#FFFFFF',
+              border: '1px solid var(--border-color)',
+              borderLeft: `4px solid ${
+                t.type === 'success' ? 'var(--brand-primary)' :
+                t.type === 'error' ? '#EF4444' :
+                t.type === 'warning' ? '#F59E0B' : 'var(--brand-primary)'
               }`,
-              boxShadow: '0 10px 30px -5px rgba(0,0,0,0.6)',
-              color: '#F8FAFC',
+              boxShadow: 'var(--shadow-dropdown)',
+              color: '#111827',
               fontSize: '13.5px',
-              animation: 'fadeIn 0.25s ease-out'
+              animation: 'fadeIn 0.22s ease-out'
             }}
           >
             {t.type === 'success' && <CheckCircle2 size={18} color="#10B981" style={{ flexShrink: 0, marginTop: '2px' }} />}

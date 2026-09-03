@@ -558,7 +558,7 @@ const Predictions = () => {
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '1rem',
-                background: 'rgba(15, 23, 42, 0.7)',
+                background: '#F9FAFB',
                 padding: '1.25rem',
                 borderRadius: '0.75rem',
                 border: '1px solid var(--border-color)'
