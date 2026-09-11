@@ -9,7 +9,6 @@ import {
   ExternalLink,
   Check,
   CheckCheck,
-  Clock,
   X,
   Menu
 } from 'lucide-react';
@@ -18,14 +17,12 @@ import { useAuth } from '../context/AuthContext';
 import { useNav } from '../context/NavContext';
 import SystemHealthBadge from './SystemHealthBadge';
 import api from '../services/api';
-import { useISTClock } from '../utils/timeUtils';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { toggleMobileNav } = useNav();
   const location = useLocation();
   const navigate = useNavigate();
-  const { time12, dateStr } = useISTClock();
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentNotifications, setRecentNotifications] = useState([]);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
@@ -127,26 +124,20 @@ const Navbar = () => {
           <h2 className="navbar-page-title">
             {getPageTitle(location.pathname)}
           </h2>
-          <div className="navbar-breadcrumb">
-            PredictIQ &bull; <span style={{ color: 'var(--accent-primary)' }}>Live Operational</span>
-          </div>
+          {user?.role === 'Admin' && (
+            <div className="navbar-breadcrumb">
+              PredictIQ &bull; <span style={{ color: 'var(--accent-primary)' }}>Live Operational</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Right Section: System Indicators & Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-        {/* IST Clock Badge (Visible on desktop & wide tablets) */}
-        {!(location.pathname === '/dashboard' || location.pathname === '/predictions' || location.pathname === '/alerts') && (
-          <div className="navbar-clock-badge" title="India Standard Time (IST)">
-            <Clock size={13} color="var(--accent-primary)" />
-            <span>{time12}</span>
-            <span style={{ opacity: 0.4 }}>|</span>
-            <span style={{ color: 'var(--text-secondary)' }}>{dateStr}</span>
-          </div>
-        )}
+
 
         {/* Real-Time System Health Indicator */}
-        <SystemHealthBadge />
+        {user?.role === 'Admin' && <SystemHealthBadge />}
 
         {/* Notifications Bell with Dropdown */}
         <div style={{ position: 'relative' }}>

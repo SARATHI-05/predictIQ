@@ -89,20 +89,20 @@ const AccountVerified = () => {
 
         {/* Feature Highlights */}
         <div style={{
-          background: 'rgba(11, 15, 23, 0.7)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'rgba(16, 185, 129, 0.05)',
+          border: '1px solid rgba(16, 185, 129, 0.15)',
           borderRadius: '0.85rem',
           padding: '1rem 1.25rem',
           marginBottom: '1.75rem',
           textAlign: 'left',
-          fontSize: '0.8rem',
+          fontSize: '0.85rem',
           color: 'var(--text-secondary)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', color: 'var(--text-primary)', fontWeight: 600 }}>
             <Sparkles size={14} color="#10B981" />
             <span>What's ready for you:</span>
           </div>
-          <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: '1.6' }}>
+          <ul style={{ margin: 0, paddingLeft: '1.2rem', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
             <li>Real-time Meal Demand Forecasting</li>
             <li>Raw Inventory & Ingredient Calculator</li>
             <li>Automated Wastage Reduction Analytics</li>
