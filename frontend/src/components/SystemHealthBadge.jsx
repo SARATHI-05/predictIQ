@@ -50,8 +50,8 @@ const SystemHealthBadge = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '7px',
-          background: 'rgba(255, 255, 255, 0.04)',
-          border: `1px solid ${isHealthy ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)'}`,
+          background: 'rgba(15, 23, 42, 0.04)',
+          border: `1px solid ${isHealthy ? 'rgba(16, 185, 129, 0.3)' : 'rgba(225, 29, 72, 0.3)'}`,
           borderRadius: '999px',
           padding: '5px 12px',
           color: isHealthy ? 'var(--accent-primary)' : 'var(--accent-rose)',
@@ -68,8 +68,8 @@ const SystemHealthBadge = () => {
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: isHealthy ? '#10B981' : '#F43F5E',
-            boxShadow: isHealthy ? '0 0 8px #10B981' : '0 0 8px #F43F5E',
+            backgroundColor: isHealthy ? '#059669' : '#E11D48',
+            boxShadow: isHealthy ? '0 0 8px #059669' : '0 0 8px #E11D48',
             animation: 'pulse 2s infinite'
           }}
         />
@@ -116,7 +116,7 @@ const SystemHealthBadge = () => {
               <span style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--text-secondary)' }}>
                 <Server size={15} color="var(--accent-secondary)" /> FastAPI Backend
               </span>
-              <span style={{ color: health.backend === 'online' ? '#10B981' : '#F43F5E', fontWeight: 600 }}>
+              <span style={{ color: health.backend === 'online' ? '#059669' : '#E11D48', fontWeight: 600 }}>
                 {health.backend}
               </span>
             </div>
@@ -125,7 +125,7 @@ const SystemHealthBadge = () => {
               <span style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--text-secondary)' }}>
                 <Database size={15} color="var(--accent-amber)" /> Database (MySQL/SQLite)
               </span>
-              <span style={{ color: health.database === 'connected' ? '#10B981' : '#F43F5E', fontWeight: 600 }}>
+              <span style={{ color: health.database === 'connected' ? '#059669' : '#E11D48', fontWeight: 600 }}>
                 {health.database}
               </span>
             </div>
@@ -134,7 +134,7 @@ const SystemHealthBadge = () => {
               <span style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--text-secondary)' }}>
                 <Cpu size={15} color="var(--accent-primary)" /> ML Model Pipeline
               </span>
-              <span style={{ color: health.ml_model === 'available' ? '#10B981' : '#F59E0B', fontWeight: 600 }}>
+              <span style={{ color: health.ml_model === 'available' ? '#059669' : '#D97706', fontWeight: 600 }}>
                 {health.ml_model}
               </span>
             </div>

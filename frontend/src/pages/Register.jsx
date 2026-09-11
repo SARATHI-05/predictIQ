@@ -87,7 +87,7 @@ const Register = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
+      background: 'radial-gradient(ellipse at top, #F8FAFC 0%, #F1F5F9 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
@@ -96,8 +96,8 @@ const Register = () => {
         maxWidth: '460px',
         padding: '2.5rem',
         borderRadius: '1.25rem',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
+        border: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-glow)'
       }}>
         {emailSent ? (
           /* Email Verification Sent Screen */
@@ -106,14 +106,14 @@ const Register = () => {
               width: '60px',
               height: '60px',
               borderRadius: '50%',
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '2px solid rgba(16, 185, 129, 0.4)',
+              background: 'rgba(5, 150, 105, 0.1)',
+              border: '2px solid rgba(5, 150, 105, 0.3)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: '1.25rem',
-              color: '#34D399',
-              boxShadow: '0 0 20px rgba(16, 185, 129, 0.25)'
+              color: '#059669',
+              boxShadow: '0 0 20px rgba(5, 150, 105, 0.15)'
             }}>
               <Inbox size={30} />
             </div>
@@ -293,10 +293,10 @@ const Register = () => {
               {error && (
                 <div style={{
                   padding: '0.75rem 1rem',
-                  background: 'rgba(244, 63, 94, 0.15)',
-                  border: '1px solid rgba(244, 63, 94, 0.3)',
+                  background: 'rgba(225, 29, 72, 0.1)',
+                  border: '1px solid rgba(225, 29, 72, 0.3)',
                   borderRadius: '0.75rem',
-                  color: '#FB7185',
+                  color: '#E11D48',
                   fontSize: '0.825rem',
                   marginTop: '1rem',
                   display: 'flex',
@@ -317,7 +317,7 @@ const Register = () => {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#FB7185',
+                      color: '#E11D48',
                       cursor: 'pointer',
                       padding: '2px',
                       display: 'flex',

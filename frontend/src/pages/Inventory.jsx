@@ -114,7 +114,7 @@ const Inventory = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ padding: '8px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
+            <div style={{ padding: '8px', background: 'rgba(5, 150, 105, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
               <Package size={24} />
             </div>
             <div>
@@ -166,7 +166,7 @@ const Inventory = () => {
           </div>
         </div>
 
-        <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: `1px solid ${summary.low_stock_count > 0 ? 'rgba(244, 63, 94, 0.4)' : 'var(--border-color)'}`, borderRadius: '12px' }}>
+        <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: `1px solid ${summary.low_stock_count > 0 ? 'rgba(225, 29, 72, 0.4)' : 'var(--border-color)'}`, borderRadius: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
             <span>Low Stock Items</span>
             <AlertTriangle size={18} color={summary.low_stock_count > 0 ? 'var(--accent-rose)' : 'var(--accent-primary)'} />
@@ -197,8 +197,8 @@ const Inventory = () => {
       {summary.low_stock_count > 0 && (
         <div
           style={{
-            background: 'rgba(244, 63, 94, 0.08)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
+            background: 'rgba(225, 29, 72, 0.08)',
+            border: '1px solid rgba(225, 29, 72, 0.3)',
             borderRadius: '12px',
             padding: '1rem 1.25rem',
             marginBottom: '1.5rem',
@@ -210,9 +210,9 @@ const Inventory = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <AlertTriangle size={24} color="#F43F5E" />
+            <AlertTriangle size={24} color="#E11D48" />
             <div>
-              <div style={{ fontWeight: 700, color: '#F43F5E', fontSize: '0.95rem' }}>
+              <div style={{ fontWeight: 700, color: '#E11D48', fontSize: '0.95rem' }}>
                 Critical Supply Shortfall Detected ({summary.low_stock_count} Items)
               </div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
@@ -223,7 +223,7 @@ const Inventory = () => {
           <button 
             className="btn btn-secondary" 
             onClick={() => setActiveTab('recommendations')}
-            style={{ fontSize: '0.85rem', borderColor: '#F43F5E', color: '#F43F5E' }}
+            style={{ fontSize: '0.85rem', borderColor: '#E11D48', color: '#E11D48' }}
           >
             View Purchase Order
           </button>

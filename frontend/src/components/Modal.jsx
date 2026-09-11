@@ -8,7 +8,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = '600px' }) => {
     <div style={{
       position: 'fixed',
       inset: 0,
-      background: 'rgba(0, 0, 0, 0.75)',
+      background: 'rgba(15, 23, 42, 0.5)',
       backdropFilter: 'blur(8px)',
       display: 'flex',
       alignItems: 'center',
@@ -19,9 +19,9 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = '600px' }) => {
       <div className="glass-card animate-fade-in" style={{
         width: '100%',
         maxWidth: maxWidth,
-        background: '#131B2A',
-        border: '1px solid rgba(255, 255, 255, 0.15)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
         overflow: 'hidden'
       }}>
         <div style={{

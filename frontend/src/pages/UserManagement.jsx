@@ -250,7 +250,7 @@ const UserManagement = () => {
                             padding: '4px 8px', 
                             fontSize: '12px', 
                             color: u.id === currentUser?.id ? 'var(--text-muted)' : 'var(--accent-rose)',
-                            borderColor: u.id === currentUser?.id ? 'transparent' : 'rgba(244, 63, 94, 0.3)',
+                            borderColor: u.id === currentUser?.id ? 'transparent' : 'rgba(225, 29, 72, 0.3)',
                             cursor: u.id === currentUser?.id ? 'not-allowed' : 'pointer'
                           }}
                           title={u.id === currentUser?.id ? 'Cannot delete own account' : 'Permanently Delete User'}
@@ -323,11 +323,11 @@ const UserManagement = () => {
             alignItems: 'flex-start', 
             marginBottom: '1.25rem', 
             padding: '1rem', 
-            background: 'rgba(244, 63, 94, 0.1)', 
+            background: 'rgba(225, 29, 72, 0.1)', 
             borderRadius: '10px', 
-            border: '1px solid rgba(244, 63, 94, 0.25)' 
+            border: '1px solid rgba(225, 29, 72, 0.25)' 
           }}>
-            <div style={{ padding: '8px', background: 'rgba(244, 63, 94, 0.2)', borderRadius: '8px', color: 'var(--accent-rose)', flexShrink: 0 }}>
+            <div style={{ padding: '8px', background: 'rgba(225, 29, 72, 0.2)', borderRadius: '8px', color: 'var(--accent-rose)', flexShrink: 0 }}>
               <AlertTriangle size={24} />
             </div>
             <div>

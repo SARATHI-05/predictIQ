@@ -48,8 +48,8 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div style={{
-        background: 'rgba(19, 27, 42, 0.95)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
         padding: '0.75rem 1rem',
         borderRadius: '0.5rem',
         boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
@@ -165,8 +165,8 @@ const Dashboard = () => {
 
       {/* Connection Notice / Error State */}
       {error && !summary && !loading && (
-        <div className="glass-card" style={{ padding: '2rem', textAlign: 'center', marginBottom: '1.75rem', borderColor: 'rgba(244, 63, 94, 0.35)', background: 'rgba(244, 63, 94, 0.04)' }}>
-          <AlertTriangle size={36} color="#F43F5E" style={{ margin: '0 auto 1rem' }} />
+        <div className="glass-card" style={{ padding: '2rem', textAlign: 'center', marginBottom: '1.75rem', borderColor: 'rgba(225, 29, 72, 0.35)', background: 'rgba(225, 29, 72, 0.04)' }}>
+          <AlertTriangle size={36} color="#E11D48" style={{ margin: '0 auto 1rem' }} />
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             Unable to load live dashboard feed
           </h3>
@@ -289,21 +289,21 @@ const Dashboard = () => {
             <AreaChart data={trends?.demand_trend || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="predGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.0}/>
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0.0}/>
                 </linearGradient>
                 <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#38BDF8" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#38BDF8" stopOpacity={0.0}/>
+                  <stop offset="5%" stopColor="#0284C7" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#0284C7" stopOpacity={0.0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
               <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickFormatter={(v) => v.slice(5)} />
               <YAxis stroke="#64748B" fontSize={11} />
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="top" height={36} iconType="circle" />
-              <Area type="monotone" dataKey="actual_consumed" name="Actual Consumed" stroke="#38BDF8" strokeWidth={2.5} fillOpacity={1} fill="url(#actGrad)" />
-              <Area type="monotone" dataKey="predicted_demand" name="Predicted Demand" stroke="#10B981" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#predGrad)" />
+              <Area type="monotone" dataKey="actual_consumed" name="Actual Consumed" stroke="#0284C7" strokeWidth={2.5} fillOpacity={1} fill="url(#actGrad)" />
+              <Area type="monotone" dataKey="predicted_demand" name="Predicted Demand" stroke="#059669" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#predGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -315,14 +315,14 @@ const Dashboard = () => {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={trends?.category_demand || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
               <XAxis dataKey="category" stroke="#64748B" fontSize={11} />
               <YAxis stroke="#64748B" fontSize={11} />
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="top" height={36} iconType="rect" />
-              <Bar dataKey="consumed" name="Consumed" fill="#10B981" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="prepared" name="Prepared" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="leftover" name="Leftover (Waste)" fill="#F43F5E" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="consumed" name="Consumed" fill="#059669" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="prepared" name="Prepared" fill="#0284C7" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="leftover" name="Leftover (Waste)" fill="#E11D48" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -334,7 +334,7 @@ const Dashboard = () => {
         <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertTriangle size={18} color="#F43F5E" />
+              <AlertTriangle size={18} color="#E11D48" />
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Surplus & Stock Alerts</h3>
             </div>
             <Link to="/alerts" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600 }}>
@@ -368,7 +368,7 @@ const Dashboard = () => {
             {activities?.latest_predictions?.map((p) => (
               <div key={p.id} style={{
                 padding: '0.75rem',
-                background: 'rgba(255, 255, 255, 0.02)',
+                background: '#F8FAFC',
                 borderRadius: '0.5rem',
                 border: '1px solid var(--border-color)',
                 display: 'flex',
@@ -384,7 +384,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#34D399' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#059669' }}>
                     {p.predicted_demand} <span style={{ fontSize: '0.7rem', fontWeight: 500, color: 'var(--text-muted)' }}>meals</span>
                   </div>
                   <span className={`badge ${p.demand_level === 'Peak' ? 'badge-rose' : p.demand_level === 'High' ? 'badge-amber' : 'badge-cyan'}`} style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
@@ -416,7 +416,7 @@ const Dashboard = () => {
             {activities?.recent_records?.map((r) => (
               <div key={r.id} style={{
                 padding: '0.75rem',
-                background: 'rgba(255, 255, 255, 0.02)',
+                background: '#F8FAFC',
                 borderRadius: '0.5rem',
                 border: '1px solid var(--border-color)',
                 display: 'flex',
@@ -435,7 +435,7 @@ const Dashboard = () => {
                   <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                     {r.food_consumed} / {r.food_prepared} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>consumed</span>
                   </div>
-                  <div style={{ fontSize: '0.725rem', color: r.leftover > 30 ? '#FB7185' : '#34D399' }}>
+                  <div style={{ fontSize: '0.725rem', color: r.leftover > 30 ? '#E11D48' : '#059669' }}>
                     {r.leftover} leftover
                   </div>
                 </div>

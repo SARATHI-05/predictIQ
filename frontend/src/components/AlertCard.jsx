@@ -18,11 +18,11 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
   const getIcon = () => {
     const typeStr = alert.alert_type?.toLowerCase() || '';
     if (typeStr.includes('surplus')) {
-      return <AlertTriangle size={20} color="#FB7185" />;
+      return <AlertTriangle size={20} color="#E11D48" />;
     } else if (typeStr.includes('shortage')) {
-      return <ShieldAlert size={20} color="#FBBF24" />;
+      return <ShieldAlert size={20} color="#D97706" />;
     } else {
-      return <Info size={20} color="#22D3EE" />;
+      return <Info size={20} color="#0284C7" />;
     }
   };
 
@@ -31,7 +31,7 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
   return (
     <div className="glass-card" style={{
       padding: '1.25rem',
-      borderLeft: isSurplus ? '4px solid #F43F5E' : (alert.severity === 'High' ? '4px solid #F43F5E' : '4px solid #06B6D4'),
+      borderLeft: isSurplus ? '4px solid #E11D48' : (alert.severity === 'High' ? '4px solid #E11D48' : '4px solid #0284C7'),
       opacity: alert.is_read ? 0.75 : 1,
       transition: 'all 0.2s ease'
     }}>
@@ -41,7 +41,7 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
             width: '38px',
             height: '38px',
             borderRadius: '8px',
-            background: isSurplus ? 'rgba(244, 63, 94, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+            background: isSurplus ? 'rgba(225, 29, 72, 0.12)' : 'rgba(2, 132, 199, 0.12)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -95,7 +95,7 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
               style={{ padding: '0.45rem 0.8rem', fontSize: '0.75rem' }}
               title="Acknowledge & Mark Resolved"
             >
-              <CheckCircle2 size={14} color="#10B981" />
+              <CheckCircle2 size={14} color="#059669" />
               <span>Acknowledge</span>
             </button>
           )}
@@ -116,7 +116,7 @@ const AlertCard = ({ alert, onMarkRead, onMarkUnread, onDelete, onRouteDonation 
             <button
               onClick={() => onDelete(alert.id)}
               className="btn btn-secondary"
-              style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', color: '#FDA4AF' }}
+              style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', color: '#E11D48' }}
               title="Dismiss and delete alert"
             >
               <Trash2 size={13} />

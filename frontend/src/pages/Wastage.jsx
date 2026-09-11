@@ -148,18 +148,18 @@ const Wastage = () => {
             <AreaChart data={data?.daily_wastage_trend || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="wasteGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#F43F5E" stopOpacity={0.0}/>
+                  <stop offset="5%" stopColor="#E11D48" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#E11D48" stopOpacity={0.0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
               <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickFormatter={(v) => v.slice(5)} />
               <YAxis stroke="#64748B" fontSize={11} />
               <Tooltip
-                contentStyle={{ background: '#131B2A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}
+                contentStyle={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '0.5rem' }}
               />
               <Legend verticalAlign="top" height={36} />
-              <Area type="monotone" dataKey="leftover" name="Leftovers (Waste)" stroke="#F43F5E" strokeWidth={2.5} fillOpacity={1} fill="url(#wasteGrad)" />
+              <Area type="monotone" dataKey="leftover" name="Leftovers (Waste)" stroke="#E11D48" strokeWidth={2.5} fillOpacity={1} fill="url(#wasteGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -171,31 +171,31 @@ const Wastage = () => {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={data?.category_wastage || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
               <XAxis dataKey="category" stroke="#64748B" fontSize={11} />
               <YAxis stroke="#64748B" fontSize={11} unit="%" />
               <Tooltip
-                contentStyle={{ background: '#131B2A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}
+                contentStyle={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '0.5rem' }}
                 formatter={(val) => [`${val}%`, 'Wastage Rate']}
               />
               <Legend verticalAlign="top" height={36} />
-              <Bar dataKey="wastage_percent" name="Wastage %" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="wastage_percent" name="Wastage %" fill="#D97706" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
 
       {/* Prevention & Donation Strategy Box */}
-      <div className="glass-card" style={{ padding: '1.75rem', background: 'linear-gradient(135deg, rgba(19, 27, 42, 0.9) 0%, rgba(16, 185, 129, 0.05) 100%)' }}>
+      <div className="glass-card" style={{ padding: '1.75rem', background: 'linear-gradient(135deg, #F8FAFC 0%, rgba(5, 150, 105, 0.05) 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-          <HeartHandshake size={24} color="#34D399" />
+          <HeartHandshake size={24} color="#059669" />
           <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>AI Food Waste Reduction & Redistribution Protocol</h3>
         </div>
 
         <div className="grid-cols-3" style={{ gap: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#FFFFFF', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <ShieldCheck size={16} color="#34D399" />
+              <ShieldCheck size={16} color="#059669" />
               1. Dynamic Safety Buffer
             </div>
             <p>
@@ -203,9 +203,9 @@ const Wastage = () => {
             </p>
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#FFFFFF', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <AlertTriangle size={16} color="#FBBF24" />
+              <AlertTriangle size={16} color="#D97706" />
               2. Proactive Surplus Thresholds
             </div>
             <p>
@@ -213,9 +213,9 @@ const Wastage = () => {
             </p>
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#FFFFFF', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <HeartHandshake size={16} color="#38BDF8" />
+              <HeartHandshake size={16} color="#0284C7" />
               3. NGO Donation Routing
             </div>
             <p>

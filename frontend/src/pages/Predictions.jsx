@@ -319,7 +319,7 @@ const Predictions = () => {
     {
       header: 'Predicted Demand',
       accessor: 'predicted_demand',
-      render: (r) => <span style={{ fontWeight: 700, color: '#34D399' }}>{r.predicted_demand} meals</span>
+      render: (r) => <span style={{ fontWeight: 700, color: '#059669' }}>{r.predicted_demand} meals</span>
     },
     {
       header: 'Recommended Prep',
@@ -376,7 +376,7 @@ const Predictions = () => {
             <button
               onClick={() => handleOpenDelete(r)}
               className="btn btn-secondary"
-              style={{ padding: '0.35rem 0.55rem', color: '#FDA4AF' }}
+              style={{ padding: '0.35rem 0.55rem', color: '#E11D48' }}
               title="Delete Historical Forecast (Admin Only)"
             >
               <Trash2 size={13} />
@@ -423,10 +423,10 @@ const Predictions = () => {
           {error && (
             <div style={{
               padding: '0.75rem 1rem',
-              background: 'rgba(244, 63, 94, 0.15)',
-              border: '1px solid rgba(244, 63, 94, 0.3)',
+              background: 'rgba(225, 29, 72, 0.15)',
+              border: '1px solid rgba(225, 29, 72, 0.3)',
               borderRadius: '0.5rem',
-              color: '#FB7185',
+              color: '#E11D48',
               fontSize: '0.825rem',
               marginBottom: '1rem'
             }}>
@@ -558,7 +558,7 @@ const Predictions = () => {
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '1rem',
-                background: 'rgba(15, 23, 42, 0.7)',
+                background: 'var(--bg-sidebar)',
                 padding: '1.25rem',
                 borderRadius: '0.75rem',
                 border: '1px solid var(--border-color)'
@@ -567,7 +567,7 @@ const Predictions = () => {
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
                     Predicted Demand
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#34D399', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#059669', marginTop: '0.25rem' }}>
                     {predictionResult.predicted_demand} <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-muted)' }}>meals</span>
                   </div>
                 </div>
@@ -576,7 +576,7 @@ const Predictions = () => {
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
                     Recommended Prep
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#38BDF8', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0284C7', marginTop: '0.25rem' }}>
                     {predictionResult.recommended_preparation} <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-muted)' }}>meals</span>
                   </div>
                 </div>
@@ -601,8 +601,8 @@ const Predictions = () => {
               {predictionResult.surplus_detected && (
                 <div style={{
                   padding: '1rem',
-                  background: 'rgba(244, 63, 94, 0.12)',
-                  border: '1px solid rgba(244, 63, 94, 0.3)',
+                  background: 'rgba(225, 29, 72, 0.12)',
+                  border: '1px solid rgba(225, 29, 72, 0.3)',
                   borderRadius: '0.75rem',
                   display: 'flex',
                   gap: '0.75rem',
@@ -611,9 +611,9 @@ const Predictions = () => {
                   flexWrap: 'wrap'
                 }}>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flex: 1, minWidth: '220px' }}>
-                    <AlertTriangle size={20} color="#FB7185" style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                    <AlertTriangle size={20} color="#E11D48" style={{ flexShrink: 0, marginTop: '0.1rem' }} />
                     <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#FB7185' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#E11D48' }}>
                         Surplus Food Alert Triggered (~{predictionResult.surplus_meals} meals excess)
                       </div>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem', lineHeight: 1.4 }}>
@@ -649,7 +649,7 @@ const Predictions = () => {
                     <Boxes size={14} color="var(--accent-secondary)" />
                     Required Ingredients ({predictionResult.food_category})
                   </span>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#38BDF8', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0284C7', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     <Coins size={14} /> Est. Cost: ₹{predictionResult.total_estimated_ingredient_cost?.toLocaleString()}
                   </span>
                 </div>
@@ -673,11 +673,11 @@ const Predictions = () => {
                           <td>{ing.current_inventory} {ing.unit}</td>
                           <td>
                             {ing.additional_required > 0 ? (
-                              <span style={{ color: '#FB7185', fontWeight: 700 }}>
+                              <span style={{ color: '#E11D48', fontWeight: 700 }}>
                                 +{ing.additional_required} {ing.unit}
                               </span>
                             ) : (
-                              <span style={{ color: '#34D399' }}>Sufficient</span>
+                              <span style={{ color: '#059669' }}>Sufficient</span>
                             )}
                           </td>
                           <td>₹{ing.estimated_cost}</td>
@@ -864,8 +864,8 @@ const Predictions = () => {
         <form onSubmit={handleSaveActual}>
           <div style={{
             padding: '0.85rem',
-            background: 'rgba(56, 189, 248, 0.08)',
-            border: '1px solid rgba(56, 189, 248, 0.2)',
+            background: 'rgba(2, 132, 199, 0.08)',
+            border: '1px solid rgba(2, 132, 199, 0.2)',
             borderRadius: '0.5rem',
             marginBottom: '1.25rem',
             fontSize: '0.85rem'
@@ -977,7 +977,7 @@ const Predictions = () => {
       >
         {donationSuccess ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <CheckCircle2 size={48} color="#10B981" style={{ marginBottom: '1rem' }} />
+            <CheckCircle2 size={48} color="#059669" style={{ marginBottom: '1rem' }} />
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               Donation Dispatched!
             </h3>
@@ -989,8 +989,8 @@ const Predictions = () => {
           <div>
             <div style={{
               padding: '1rem',
-              background: 'rgba(244, 63, 94, 0.1)',
-              border: '1px solid rgba(244, 63, 94, 0.25)',
+              background: 'rgba(225, 29, 72, 0.1)',
+              border: '1px solid rgba(225, 29, 72, 0.25)',
               borderRadius: '0.5rem',
               marginBottom: '1.25rem',
               fontSize: '0.85rem',

@@ -207,7 +207,7 @@ const Alerts = () => {
             <span>Create Alert</span>
           </button>
           {isAdmin && alerts.some(a => a.is_read) && (
-            <button onClick={handleClearResolved} className="btn btn-secondary" style={{ fontSize: '0.8125rem', color: '#FDA4AF' }}>
+            <button onClick={handleClearResolved} className="btn btn-secondary" style={{ fontSize: '0.8125rem', color: '#E11D48' }}>
               <Trash2 size={14} />
               <span>Clear Resolved</span>
             </button>
@@ -234,7 +234,7 @@ const Alerts = () => {
         <button
           onClick={() => setFilter('surplus')}
           className={`btn ${filter === 'surplus' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ fontSize: '0.8rem', padding: '0.45rem 0.9rem', color: filter === 'surplus' ? '#FFF' : '#FB7185' }}
+          style={{ fontSize: '0.8rem', padding: '0.45rem 0.9rem', color: filter === 'surplus' ? '#FFF' : '#E11D48' }}
         >
           <AlertTriangle size={13} style={{ marginRight: '4px' }} />
           Surplus Warnings ({surplusCount})
@@ -290,7 +290,7 @@ const Alerts = () => {
       >
         {donationSuccess ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <CheckCircle2 size={48} color="#10B981" style={{ marginBottom: '1rem' }} />
+            <CheckCircle2 size={48} color="#059669" style={{ marginBottom: '1rem' }} />
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               Donation Dispatched!
             </h3>
@@ -302,8 +302,8 @@ const Alerts = () => {
           <div>
             <div style={{
               padding: '1rem',
-              background: 'rgba(244, 63, 94, 0.1)',
-              border: '1px solid rgba(244, 63, 94, 0.25)',
+              background: 'rgba(225, 29, 72, 0.1)',
+              border: '1px solid rgba(225, 29, 72, 0.25)',
               borderRadius: '0.5rem',
               marginBottom: '1.25rem',
               fontSize: '0.85rem',

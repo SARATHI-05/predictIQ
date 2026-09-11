@@ -105,28 +105,28 @@ const GoogleLogin = ({ onError, onSuccess, buttonText = 'Continue with Google' }
           justifyContent: 'center',
           gap: '0.75rem',
           padding: '0.85rem 1rem',
-          background: 'rgba(255, 255, 255, 0.05)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
+          background: '#FFFFFF',
+          border: '1px solid var(--border-color)',
           borderRadius: '0.75rem',
           color: 'var(--text-primary)',
           fontSize: '0.925rem',
           fontWeight: 600,
           cursor: loading ? 'not-allowed' : 'pointer',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
           opacity: loading ? 0.7 : 1
         }}
         onMouseEnter={(e) => {
           if (!loading) {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            e.currentTarget.style.background = '#F8FAFC';
+            e.currentTarget.style.borderColor = '#CBD5E1';
             e.currentTarget.style.transform = 'translateY(-1px)';
           }
         }}
         onMouseLeave={(e) => {
           if (!loading) {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.background = '#FFFFFF';
+            e.currentTarget.style.borderColor = 'var(--border-color)';
             e.currentTarget.style.transform = 'translateY(0)';
           }
         }}

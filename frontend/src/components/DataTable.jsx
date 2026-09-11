@@ -74,7 +74,7 @@ const DataTable = ({
           padding: '1rem 0.5rem 0',
           fontSize: '0.8125rem',
           color: 'var(--text-secondary)',
-          borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+          borderTop: '1px solid var(--border-color)'
         }}>
           <div>
             Showing <b>{(page - 1) * pageSize + 1}</b> to <b>{Math.min(page * pageSize, total)}</b> of <b>{total}</b> entries

@@ -89,9 +89,9 @@ const Sidebar = () => {
                 borderRadius: '0.55rem',
                 fontSize: '0.84rem',
                 fontWeight: isActive ? 600 : 500,
-                color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
-                backgroundColor: isActive ? 'rgba(16, 185, 129, 0.16)' : 'transparent',
-                border: isActive ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid transparent',
+                color: isActive ? '#0F172A' : 'var(--text-secondary)',
+                backgroundColor: isActive ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                border: isActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
                 textDecoration: 'none',
                 transition: 'all 0.15s ease',
               })}
@@ -130,7 +130,7 @@ const Sidebar = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#0B1120'
+          background: 'var(--bg-sidebar)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
@@ -186,7 +186,7 @@ const Sidebar = () => {
         <div style={{
           padding: '0.85rem 1rem',
           borderTop: '1px solid var(--border-color)',
-          background: '#0B1120'
+          background: 'var(--bg-sidebar)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{

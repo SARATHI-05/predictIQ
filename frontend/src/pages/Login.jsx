@@ -64,7 +64,7 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
+      background: 'radial-gradient(ellipse at top, #F8FAFC 0%, #F1F5F9 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
@@ -73,8 +73,8 @@ const Login = () => {
         maxWidth: '440px',
         padding: '2.5rem',
         borderRadius: '1.25rem',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)'
+        border: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-glow)'
       }}>
         {/* Logo Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
@@ -103,10 +103,10 @@ const Login = () => {
         {successMsg && (
           <div style={{
             padding: '0.85rem 1rem',
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
+            background: 'rgba(5, 150, 105, 0.1)',
+            border: '1px solid rgba(5, 150, 105, 0.3)',
             borderRadius: '0.75rem',
-            color: '#34D399',
+            color: '#059669',
             fontSize: '0.825rem',
             marginBottom: '1.25rem',
             display: 'flex',
@@ -232,10 +232,10 @@ const Login = () => {
           {error && (
             <div style={{
               padding: '0.75rem 1rem',
-              background: 'rgba(244, 63, 94, 0.15)',
-              border: '1px solid rgba(244, 63, 94, 0.3)',
+              background: 'rgba(225, 29, 72, 0.1)',
+              border: '1px solid rgba(225, 29, 72, 0.3)',
               borderRadius: '0.75rem',
-              color: '#FB7185',
+              color: '#E11D48',
               fontSize: '0.825rem',
               marginTop: '1rem',
               display: 'flex',
@@ -256,7 +256,7 @@ const Login = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#FB7185',
+                  color: '#E11D48',
                   cursor: 'pointer',
                   padding: '2px',
                   display: 'flex',

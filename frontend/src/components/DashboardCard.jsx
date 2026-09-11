@@ -16,32 +16,32 @@ const DashboardCard = ({
         return {
           bg: 'rgba(6, 182, 212, 0.12)',
           border: 'rgba(6, 182, 212, 0.25)',
-          color: '#22D3EE',
+          color: '#0284C7',
         };
       case 'amber':
         return {
           bg: 'rgba(245, 158, 11, 0.12)',
           border: 'rgba(245, 158, 11, 0.25)',
-          color: '#FBBF24',
+          color: '#D97706',
         };
       case 'rose':
         return {
           bg: 'rgba(244, 63, 94, 0.12)',
           border: 'rgba(244, 63, 94, 0.25)',
-          color: '#FB7185',
+          color: '#E11D48',
         };
       case 'purple':
         return {
           bg: 'rgba(139, 92, 246, 0.12)',
           border: 'rgba(139, 92, 246, 0.25)',
-          color: '#A78BFA',
+          color: '#7C3AED',
         };
       case 'emerald':
       default:
         return {
           bg: 'rgba(16, 185, 129, 0.12)',
           border: 'rgba(16, 185, 129, 0.25)',
-          color: '#34D399',
+          color: '#059669',
         };
     }
   };
@@ -82,7 +82,7 @@ const DashboardCard = ({
             gap: '0.2rem',
             fontSize: '0.75rem',
             fontWeight: 600,
-            color: trendType === 'positive' ? '#34D399' : '#FB7185'
+            color: trendType === 'positive' ? '#059669' : '#E11D48'
           }}>
             {trendType === 'positive' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
             <span>{trend}</span>

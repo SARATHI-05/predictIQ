@@ -180,8 +180,8 @@ const ResourcePlanning = () => {
       {shortageList.length > 0 && (
         <div
           style={{
-            background: 'rgba(244, 63, 94, 0.09)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
+            background: 'rgba(225, 29, 72, 0.09)',
+            border: '1px solid rgba(225, 29, 72, 0.3)',
             borderRadius: '12px',
             padding: '1rem 1.25rem',
             marginBottom: '1.5rem',
@@ -193,9 +193,9 @@ const ResourcePlanning = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <AlertTriangle size={24} color="#F43F5E" />
+            <AlertTriangle size={24} color="#E11D48" />
             <div>
-              <div style={{ fontWeight: 700, color: '#F43F5E', fontSize: '0.95rem' }}>
+              <div style={{ fontWeight: 700, color: '#E11D48', fontSize: '0.95rem' }}>
                 Resource Shortage Detected ({shortageList.length} Ingredients Lacking for {targetMeals} {calcCategory} Meals)
               </div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
@@ -206,7 +206,7 @@ const ResourcePlanning = () => {
           <Link
             to="/inventory"
             className="btn btn-secondary"
-            style={{ fontSize: '0.85rem', borderColor: '#F43F5E', color: '#F43F5E', textDecoration: 'none' }}
+            style={{ fontSize: '0.85rem', borderColor: '#E11D48', color: '#E11D48', textDecoration: 'none' }}
           >
             <ShoppingCart size={15} /> Go to Inventory Restock
           </Link>
@@ -262,7 +262,7 @@ const ResourcePlanning = () => {
           </div>
 
           <div style={{
-            background: 'rgba(15, 23, 42, 0.8)',
+            background: '#FFFFFF',
             border: '1px solid var(--border-color)',
             borderRadius: '0.75rem',
             padding: '0.75rem 1.25rem',
@@ -274,11 +274,11 @@ const ResourcePlanning = () => {
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                 Est. Procurement Budget
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#38BDF8', marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0284C7', marginTop: '0.2rem' }}>
                 ₹{calcPlan?.total_estimated_cost?.toLocaleString() || 0}
               </div>
             </div>
-            <Coins size={28} color="#38BDF8" />
+            <Coins size={28} color="#0284C7" />
           </div>
         </div>
 
@@ -317,7 +317,7 @@ const ResourcePlanning = () => {
                     )}
                   </td>
                   <td>₹{item.cost_per_unit}/{item.unit}</td>
-                  <td style={{ fontWeight: 700, color: '#38BDF8' }}>
+                  <td style={{ fontWeight: 700, color: '#0284C7' }}>
                     ₹{item.estimated_cost?.toLocaleString()}
                   </td>
                 </tr>
@@ -371,7 +371,7 @@ const ResourcePlanning = () => {
                   <td>{r.unit}</td>
                   <td>₹{r.cost_per_unit}</td>
                   <td>
-                    <span style={{ fontWeight: 600, color: r.current_inventory < 30 ? '#FB7185' : '#34D399' }}>
+                    <span style={{ fontWeight: 600, color: r.current_inventory < 30 ? '#E11D48' : '#059669' }}>
                       {r.current_inventory} {r.unit}
                     </span>
                   </td>
@@ -387,7 +387,7 @@ const ResourcePlanning = () => {
                       <button
                         onClick={() => handleDelete(r.id)}
                         className="btn btn-secondary"
-                        style={{ padding: '0.35rem 0.55rem', color: '#FDA4AF' }}
+                        style={{ padding: '0.35rem 0.55rem', color: '#E11D48' }}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -409,10 +409,10 @@ const ResourcePlanning = () => {
         {formError && (
           <div style={{
             padding: '0.75rem 1rem',
-            background: 'rgba(244, 63, 94, 0.15)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
+            background: 'rgba(225, 29, 72, 0.15)',
+            border: '1px solid rgba(225, 29, 72, 0.3)',
             borderRadius: '0.5rem',
-            color: '#FB7185',
+            color: '#E11D48',
             fontSize: '0.825rem',
             marginBottom: '1rem'
           }}>

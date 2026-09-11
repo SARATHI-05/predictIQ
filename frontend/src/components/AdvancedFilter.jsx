@@ -122,7 +122,7 @@ const AdvancedFilter = ({
               <span
                 style={{
                   background: 'var(--accent-primary)',
-                  color: '#0B0F17',
+                  color: '#FFFFFF',
                   fontSize: '11px',
                   fontWeight: 700,
                   borderRadius: '999px',

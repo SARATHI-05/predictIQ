@@ -168,10 +168,10 @@ const Settings = () => {
           {trainingResult && (
             <div style={{
               padding: '0.75rem 1rem',
-              background: trainingResult.includes('failed') ? 'rgba(244, 63, 94, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-              border: `1px solid ${trainingResult.includes('failed') ? 'rgba(244, 63, 94, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+              background: trainingResult.includes('failed') ? 'rgba(225, 29, 72, 0.15)' : 'rgba(5, 150, 105, 0.15)',
+              border: `1px solid ${trainingResult.includes('failed') ? 'rgba(225, 29, 72, 0.3)' : 'rgba(5, 150, 105, 0.3)'}`,
               borderRadius: '0.5rem',
-              color: trainingResult.includes('failed') ? '#FB7185' : '#34D399',
+              color: trainingResult.includes('failed') ? '#E11D48' : '#059669',
               fontSize: '0.825rem',
               marginBottom: '1.25rem',
               display: 'flex',
@@ -217,11 +217,11 @@ const Settings = () => {
               </thead>
               <tbody>
                 {benchmarks?.benchmark_results?.map((b, idx) => (
-                  <tr key={idx} style={{ background: b.Model.includes('Random Forest') ? 'rgba(16, 185, 129, 0.08)' : 'transparent' }}>
+                  <tr key={idx} style={{ background: b.Model.includes('Random Forest') ? 'rgba(5, 150, 105, 0.08)' : 'transparent' }}>
                     <td style={{ fontWeight: 700 }}>{b.Model}</td>
                     <td>{b['MAE (meals)']} meals</td>
                     <td>{b['RMSE (meals)']} meals</td>
-                    <td style={{ fontWeight: 700, color: '#34D399' }}>{b['R² Score']}</td>
+                    <td style={{ fontWeight: 700, color: '#059669' }}>{b['R² Score']}</td>
                     <td>
                       {b.Model.includes('Random Forest') ? (
                         <span className="badge badge-emerald">Selected Production</span>
@@ -307,7 +307,7 @@ const Settings = () => {
         </h3>
 
         <div className="grid-cols-3" style={{ gap: '1.5rem', fontSize: '0.85rem' }}>
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#FFFFFF', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Current User</div>
             <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.25rem' }}>
               {user?.name || 'Administrator'}
@@ -317,9 +317,9 @@ const Settings = () => {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#FFFFFF', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Security & RBAC</div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#38BDF8', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0284C7', marginTop: '0.25rem' }}>
               {user?.role || 'Staff'} Privileges
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
@@ -327,9 +327,9 @@ const Settings = () => {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+          <div style={{ background: '#FFFFFF', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Database Backend</div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#34D399', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#059669', marginTop: '0.25rem' }}>
               SQLAlchemy ORM
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>

@@ -138,7 +138,7 @@ const Navbar = () => {
         {/* IST Clock Badge (Visible on desktop & wide tablets) */}
         {!(location.pathname === '/dashboard' || location.pathname === '/predictions' || location.pathname === '/alerts') && (
           <div className="navbar-clock-badge" title="India Standard Time (IST)">
-            <Clock size={13} color="#34D399" />
+            <Clock size={13} color="var(--accent-primary)" />
             <span>{time12}</span>
             <span style={{ opacity: 0.4 }}>|</span>
             <span style={{ color: 'var(--text-secondary)' }}>{dateStr}</span>
@@ -194,7 +194,7 @@ const Navbar = () => {
                     type="button"
                     onClick={() => setShowNotificationMenu(false)}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.06)',
+                      background: 'rgba(15, 23, 42, 0.05)',
                       border: 'none',
                       color: 'var(--text-muted)',
                       borderRadius: '6px',
@@ -218,7 +218,7 @@ const Navbar = () => {
                       key={notif.id}
                       style={{
                         padding: '0.65rem',
-                        background: 'rgba(255, 255, 255, 0.03)',
+                        background: '#F8FAFC',
                         borderRadius: '0.5rem',
                         border: '1px solid var(--border-color)',
                         display: 'flex',
@@ -239,7 +239,7 @@ const Navbar = () => {
                       <button
                         onClick={(e) => handleQuickMarkRead(notif.id, e)}
                         className="btn btn-secondary"
-                        style={{ padding: '3px 6px', fontSize: '10px', flexShrink: 0, color: '#10B981', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                        style={{ padding: '3px 6px', fontSize: '10px', flexShrink: 0, color: '#059669', borderColor: 'rgba(16, 185, 129, 0.3)' }}
                         title="Mark read"
                       >
                         <Check size={11} /> Read
@@ -281,8 +281,8 @@ const Navbar = () => {
                 width: '28px',
                 height: '28px',
                 borderRadius: '50%',
-                background: 'rgba(16, 185, 129, 0.2)',
-                color: '#34D399',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#059669',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

@@ -9,7 +9,7 @@ const ChartCard = ({ title, subtitle, children, headerAction }) => {
         alignItems: 'flex-start',
         marginBottom: '1.25rem',
         paddingBottom: '0.75rem',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+        borderBottom: '1px solid var(--border-color)'
       }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
