@@ -49,7 +49,7 @@ const DashboardCard = ({
   const accent = getAccentStyles();
 
   return (
-    <div className="glass-card glass-card-interactive" style={{ padding: '1.35rem' }}>
+    <div className="glass-card glass-card-interactive" style={{ padding: '1.35rem', position: 'relative', overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           {title}
@@ -95,6 +95,18 @@ const DashboardCard = ({
           {subtitle}
         </div>
       )}
+
+      {/* Accent gradient bar */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: '1rem',
+        right: '1rem',
+        height: '3px',
+        borderRadius: '3px 3px 0 0',
+        background: `linear-gradient(90deg, ${accent.color}, transparent)`,
+        opacity: 0.4
+      }} />
     </div>
   );
 };

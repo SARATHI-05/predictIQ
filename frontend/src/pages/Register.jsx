@@ -82,12 +82,11 @@ const Register = () => {
   };
 
   return (
-    <div style={{
+    <div className="auth-bg" style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #F8FAFC 0%, #F1F5F9 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
@@ -97,7 +96,7 @@ const Register = () => {
         padding: '2.5rem',
         borderRadius: '1.25rem',
         border: '1px solid var(--border-color)',
-        boxShadow: 'var(--shadow-glow)'
+        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08), 0 0 40px rgba(16, 185, 129, 0.06)'
       }}>
         {emailSent ? (
           /* Email Verification Sent Screen */

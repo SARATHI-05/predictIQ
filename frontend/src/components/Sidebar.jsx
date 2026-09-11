@@ -81,6 +81,7 @@ const Sidebar = () => {
               key={item.to}
               to={item.to}
               onClick={closeMobileNav}
+              className={({ isActive }) => isActive ? '' : 'sidebar-nav-link'}
               style={({ isActive }) => ({
                 display: 'flex',
                 alignItems: 'center',
@@ -90,8 +91,8 @@ const Sidebar = () => {
                 fontSize: '0.84rem',
                 fontWeight: isActive ? 600 : 500,
                 color: isActive ? '#0F172A' : 'var(--text-secondary)',
-                backgroundColor: isActive ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                border: isActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                backgroundColor: isActive ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
+                borderLeft: isActive ? '3px solid var(--accent-primary)' : '3px solid transparent',
                 textDecoration: 'none',
                 transition: 'all 0.15s ease',
               })}
@@ -102,7 +103,6 @@ const Sidebar = () => {
                     <Icon size={18} color={isActive ? 'var(--accent-primary)' : '#94A3B8'} />
                     <span>{item.label}</span>
                   </div>
-                  {isActive && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent-primary)' }} />}
                 </>
               )}
             </NavLink>

@@ -37,12 +37,11 @@ const AccountVerified = () => {
   }, []);
 
   return (
-    <div style={{
+    <div className="auth-bg" style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(ellipse at top, #131B2A 0%, #0B0F17 100%)',
       padding: '1.5rem',
       position: 'relative'
     }}>
@@ -51,8 +50,8 @@ const AccountVerified = () => {
         maxWidth: '480px',
         padding: '2.5rem',
         borderRadius: '1.25rem',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
+        border: '1px solid var(--border-color)',
+        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08), 0 0 40px rgba(16, 185, 129, 0.06)',
         textAlign: 'center'
       }}>
         {/* Success Icon */}
