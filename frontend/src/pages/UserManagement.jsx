@@ -221,7 +221,7 @@ const UserManagement = () => {
                     </td>
 
                     <td>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', minWidth: '220px' }}>
                         <button
                           className="btn btn-secondary"
                           onClick={() => viewUserActivity(u)}
