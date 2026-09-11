@@ -136,11 +136,11 @@ const Analytics = () => {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={insights?.day_averages || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="day" stroke="#64748B" fontSize={11} />
-              <YAxis stroke="#64748B" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="day" stroke="#64748B" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
+              <YAxis stroke="#64748B" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
               <Tooltip
-                contentStyle={{ background: '#131B2A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}
+                contentStyle={{ background: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(10px)', borderColor: 'var(--border-color)', borderRadius: '0.75rem', boxShadow: 'var(--shadow-hover)' }}
               />
               <Legend verticalAlign="top" height={36} />
               <Bar dataKey="avg_demand" name="Avg Demand (Meals)" fill="#10B981" radius={[4, 4, 0, 0]} />
@@ -155,11 +155,11 @@ const Analytics = () => {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={insights?.weather_demand_impact || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="weather" stroke="#64748B" fontSize={11} />
-              <YAxis stroke="#64748B" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="weather" stroke="#64748B" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
+              <YAxis stroke="#64748B" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
               <Tooltip
-                contentStyle={{ background: '#131B2A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '0.5rem' }}
+                contentStyle={{ background: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(10px)', borderColor: 'var(--border-color)', borderRadius: '0.75rem', boxShadow: 'var(--shadow-hover)' }}
               />
               <Legend verticalAlign="top" height={36} />
               <Bar dataKey="avg_demand" name="Avg Demand" fill="#38BDF8" radius={[4, 4, 0, 0]} />

@@ -263,6 +263,9 @@ def send_welcome_email(email: str, name: str = "", role: str = "Staff") -> bool:
     """
     display_name = name.strip() if name else email.split("@")[0].replace(".", " ").replace("_", " ").title()
     subject = "Welcome to PredictIQ – Your Account is Ready!"
+    
+    frontend_url = os.getenv("FRONTEND_URL", "https://predict-iq-green.vercel.app").rstrip("/")
+    login_link = f"{frontend_url}/login"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -315,7 +318,7 @@ def send_welcome_email(email: str, name: str = "", role: str = "Staff") -> bool:
           
           <p>Your account is now ready to use.</p>
           
-          <a href="https://predict-iq-green.vercel.app/" class="btn">
+          <a href="{login_link}" class="btn">
             Login to PredictIQ
           </a>
 
@@ -352,7 +355,7 @@ You can now use PredictIQ to:
 Your account is now ready to use.
 
 Login:
-https://predict-iq-green.vercel.app/
+{login_link}
 
 Thank you for joining PredictIQ.
 

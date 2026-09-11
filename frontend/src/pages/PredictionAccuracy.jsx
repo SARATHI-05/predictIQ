@@ -259,11 +259,11 @@ const PredictionAccuracy = () => {
         <div style={{ width: '100%', height: 320 }}>
           <ResponsiveContainer>
             <LineChart data={filteredHistory.slice().reverse()}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={11} />
-              <YAxis stroke="var(--text-muted)" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
               <Tooltip 
-                contentStyle={{ background: '#131B2A', borderColor: 'var(--border-color)', borderRadius: '8px', color: '#F8FAFC' }}
+                contentStyle={{ background: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(10px)', borderColor: 'var(--border-color)', borderRadius: '0.75rem', color: 'var(--text-primary)', boxShadow: 'var(--shadow-hover)' }}
               />
               <Legend />
               <Line type="monotone" dataKey="predicted_demand" name="Predicted Demand" stroke="#38BDF8" strokeWidth={2.5} dot={{ r: 3 }} />

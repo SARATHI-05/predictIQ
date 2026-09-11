@@ -8,8 +8,7 @@ const ChartCard = ({ title, subtitle, children, headerAction }) => {
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         marginBottom: '1.25rem',
-        paddingBottom: '0.75rem',
-        borderBottom: '1px solid var(--border-color)'
+        paddingBottom: '0.25rem'
       }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>

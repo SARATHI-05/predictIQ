@@ -48,15 +48,17 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div style={{
-        background: 'var(--bg-card)',
+        background: 'rgba(255, 255, 255, 0.98)',
+        backdropFilter: 'blur(10px)',
         border: '1px solid var(--border-color)',
-        padding: '0.75rem 1rem',
-        borderRadius: '0.5rem',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+        padding: '0.85rem 1.15rem',
+        borderRadius: '0.75rem',
+        boxShadow: 'var(--shadow-hover)'
       }}>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>{label}</p>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase' }}>{label}</p>
         {payload.map((entry, index) => (
-          <p key={index} style={{ fontSize: '0.8rem', color: entry.color, fontWeight: 600, margin: '0.15rem 0' }}>
+          <p key={index} style={{ fontSize: '0.85rem', color: entry.color, fontWeight: 700, margin: '0.2rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color, display: 'inline-block' }}></span>
             {entry.name}: {entry.value} meals
           </p>
         ))}
@@ -297,9 +299,9 @@ const Dashboard = () => {
                   <stop offset="95%" stopColor="#0284C7" stopOpacity={0.0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-              <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickFormatter={(v) => v.slice(5)} />
-              <YAxis stroke="#64748B" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickFormatter={(v) => v.slice(5)} axisLine={false} tickLine={false} tickMargin={10} />
+              <YAxis stroke="#94A3B8" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="top" height={36} iconType="circle" />
               <Area type="monotone" dataKey="actual_consumed" name="Actual Consumed" stroke="#0284C7" strokeWidth={2.5} fillOpacity={1} fill="url(#actGrad)" />
@@ -315,9 +317,9 @@ const Dashboard = () => {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={trends?.category_demand || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-              <XAxis dataKey="category" stroke="#64748B" fontSize={11} />
-              <YAxis stroke="#64748B" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="category" stroke="#94A3B8" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
+              <YAxis stroke="#94A3B8" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="top" height={36} iconType="rect" />
               <Bar dataKey="consumed" name="Consumed" fill="#059669" radius={[4, 4, 0, 0]} />

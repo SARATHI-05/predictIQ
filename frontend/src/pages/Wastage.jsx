@@ -152,11 +152,11 @@ const Wastage = () => {
                   <stop offset="95%" stopColor="#E11D48" stopOpacity={0.0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-              <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickFormatter={(v) => v.slice(5)} />
-              <YAxis stroke="#64748B" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickFormatter={(v) => v.slice(5)} axisLine={false} tickLine={false} tickMargin={10} />
+              <YAxis stroke="#94A3B8" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
               <Tooltip
-                contentStyle={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '0.5rem' }}
+                contentStyle={{ background: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(10px)', borderColor: 'var(--border-color)', borderRadius: '0.75rem', boxShadow: 'var(--shadow-hover)' }}
               />
               <Legend verticalAlign="top" height={36} />
               <Area type="monotone" dataKey="leftover" name="Leftovers (Waste)" stroke="#E11D48" strokeWidth={2.5} fillOpacity={1} fill="url(#wasteGrad)" />
@@ -171,11 +171,11 @@ const Wastage = () => {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={data?.category_wastage || []} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-              <XAxis dataKey="category" stroke="#64748B" fontSize={11} />
-              <YAxis stroke="#64748B" fontSize={11} unit="%" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="category" stroke="#94A3B8" fontSize={11} axisLine={false} tickLine={false} tickMargin={10} />
+              <YAxis stroke="#94A3B8" fontSize={11} unit="%" axisLine={false} tickLine={false} tickMargin={10} />
               <Tooltip
-                contentStyle={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '0.5rem' }}
+                contentStyle={{ background: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(10px)', borderColor: 'var(--border-color)', borderRadius: '0.75rem', boxShadow: 'var(--shadow-hover)' }}
                 formatter={(val) => [`${val}%`, 'Wastage Rate']}
               />
               <Legend verticalAlign="top" height={36} />
