@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Sparkles, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import GoogleLogin from '../components/GoogleLogin';
-import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState(location.state?.email || '');
   const [password, setPassword] = useState('');
@@ -38,18 +39,16 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password,
-      });
+      const result = await login(email.trim(), password);
 
-      if (authError) {
-        setError(authError.message);
-      } else if (data?.session) {
-        // Only redirect when a real session exists
-        navigate('/');
+      if (result.success) {
+        if (result.requiresVerification) {
+          setError(result.message || 'Your account requires email verification. Please check your email for the 6-digit verification code.');
+        } else {
+          navigate('/');
+        }
       } else {
-        setError('Login failed. Please verify your account before logging in.');
+        setError(result.error);
       }
     } catch (err) {
       setError(err.message || 'An unexpected error occurred. Please try again.');

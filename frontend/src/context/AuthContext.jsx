@@ -1,12 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+const [user, setUser] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('predictiq_user');
+      if (savedUser) {
+        try { return JSON.parse(savedUser); } catch { return null; }
+      }
+    }
+    return null;
+  });
+  const [token, setToken] = useState(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('predictiq_token') : null;
+  });
   const [supabaseUser, setSupabaseUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,20 +24,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Initial local storage check for instant render
-    const savedToken = localStorage.getItem('predictiq_token');
-    const savedUser = localStorage.getItem('predictiq_user');
-    if (savedToken && savedUser) {
-      try {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        localStorage.removeItem('predictiq_token');
-        localStorage.removeItem('predictiq_user');
-      }
-    }
-
-    // 2. Initialize Supabase Session check & Recovery detection
+    // 1. Initialize Supabase Session check & Recovery detection
     const initSession = async () => {
       // Auto-route to reset password page if URL contains recovery token
       if (typeof window !== 'undefined') {
@@ -40,7 +37,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user && isMounted) {
           setSupabaseUser(session.user);
           const accessToken = session.access_token;
@@ -140,7 +137,7 @@ export const AuthProvider = ({ children }) => {
       isMounted = false;
       if (subscription) subscription.unsubscribe();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Helper to extract clean error message from API responses
   const extractErrorMessage = (error, defaultMsg = 'Authentication failed.') => {
@@ -228,8 +225,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      const { access_token, user: userData } = response.data;
 
+      if (response.data?.requires_verification) {
+        return {
+          success: true,
+          requiresVerification: true,
+          email: response.data.email || email,
+          name: response.data.name || '',
+          message: response.data.message
+        };
+      }
+
+      const { access_token, user: userData } = response.data;
       localStorage.setItem('predictiq_token', access_token);
       localStorage.setItem('predictiq_user', JSON.stringify(userData));
 
@@ -444,7 +451,8 @@ export const AuthProvider = ({ children }) => {
         verifyResetCode,
         resetPassword,
         updateProfile,
-        isAuthenticated: !!token && !!user
+        isAuthenticated: !!token && !!user,
+        isAdmin: user?.role === 'Admin'
       }}
     >
       {children}
@@ -452,6 +460,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+/* eslint-disable react-refresh/only-export-components */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

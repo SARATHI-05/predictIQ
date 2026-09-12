@@ -734,6 +734,30 @@ def reset_password(payload: ResetPasswordRequest, request: Request, db: Session 
             detail="Invalid request or account not found."
         )
 
+    # If code is 'supabase_recovery', the user was already authenticated via
+    # Supabase's email recovery link. Skip OTP verification and update password directly.
+    if code_val.lower() == "supabase_recovery":
+        user.password_hash = get_password_hash(payload.new_password)
+        user.reset_token = None
+        user.reset_token_expiry = None
+        db.commit()
+        db.refresh(user)
+
+        log_audit_event(
+            db=db,
+            action="PASSWORD_RESET_SUCCESS",
+            module="Authentication",
+            description=f"Password updated via Supabase recovery for user: {user.email}",
+            user=user,
+            record_id=str(user.id),
+            request=request
+        )
+
+        return {
+            "message": "Password reset successfully. You can now sign in with your new password.",
+            "success": True
+        }
+
     # Verify and consume OTP for purpose='forgot_password'
     is_valid, err_msg = verify_otp(db=db, email=email, code=code_val, purpose="forgot_password")
     if not is_valid:

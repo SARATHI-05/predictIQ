@@ -121,9 +121,9 @@ api.interceptors.response.use(
     // Handle 401 Unauthorized with Supabase session refresh
     if (error.response?.status === 401 && originalRequest && !originalRequest._tokenRetry && supabase) {
       originalRequest._tokenRetry = true;
-      try {
-        const { data: { session }, error: refreshErr } = await supabase.auth.refreshSession();
-        if (session && session.access_token) {
+         try {
+          const { data: { session } } = await supabase.auth.refreshSession();
+          if (session && session.access_token) {
           localStorage.setItem('predictiq_token', session.access_token);
           originalRequest.headers.Authorization = `Bearer ${session.access_token}`;
           return api(originalRequest);

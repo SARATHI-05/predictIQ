@@ -141,8 +141,6 @@ def health_simple():
     return {"status": "ok"}
 
 @app.get("/api/health")
-
-
 def health_check(db: Session = Depends(get_db)):
     """
     Feature 17: Comprehensive System Health API

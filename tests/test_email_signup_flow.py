@@ -17,7 +17,7 @@ if backend_dir not in sys.path:
 from app.main import app
 from app.database.database import get_db, SessionLocal
 from app.models.user import User
-from app.utils.email_service import send_verification_email
+from app.services.email_service import send_signup_verification_code as send_verification_email
 
 def test_email_service_initialization():
     """Verify email service utilities load properly"""

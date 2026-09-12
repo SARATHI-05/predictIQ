@@ -22,7 +22,7 @@ export const formatIST = (dateInput, includeSeconds = true) => {
     };
 
     return new Intl.DateTimeFormat('en-IN', options).format(d) + ' IST';
-  } catch (e) {
+  } catch {
     return String(dateInput);
   }
 };
@@ -45,7 +45,7 @@ export const formatISTTime = (dateInput = new Date(), includeSeconds = true) => 
     };
 
     return new Intl.DateTimeFormat('en-IN', options).format(d) + ' IST';
-  } catch (e) {
+  } catch {
     return 'N/A';
   }
 };
@@ -67,7 +67,7 @@ export const formatISTDate = (dateInput = new Date()) => {
     };
 
     return new Intl.DateTimeFormat('en-IN', options).format(d);
-  } catch (e) {
+  } catch {
     return 'N/A';
   }
 };
