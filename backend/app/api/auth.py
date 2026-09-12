@@ -53,9 +53,10 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 @router.post("/register", response_model=TokenResponse)
 def register(user_in: UserCreate, request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
-    Step 1 of Signup Flow:
-    Validates user input, creates/updates pending user account,
-    generates 6-digit signup OTP, and dispatches verification email to the user's entered email.
+    Direct Signup Flow:
+    Validates user input, creates/updates user account,
+    activates account immediately without email verification bottlenecks,
+    and returns JWT access token for instant session login.
     """
     if len(user_in.password) < 6:
         raise HTTPException(
@@ -67,7 +68,7 @@ def register(user_in: UserCreate, request: Request, background_tasks: Background
 
     # Check if active verified account already exists
     existing = db.query(User).filter(User.email == email).first()
-    if existing and getattr(existing, 'is_active', True) and existing.last_login:
+    if existing and getattr(existing, 'is_active', True) and existing.last_login and existing.password_hash:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An account with this email already exists. Please sign in."
@@ -77,52 +78,52 @@ def register(user_in: UserCreate, request: Request, background_tasks: Background
     user_count = db.query(User).count()
     role = "Admin" if user_count == 0 else (user_in.role or "Staff")
 
-    # Generate 6-digit numeric OTP specifically for purpose='signup'
-    otp_code = generate_and_save_otp(db=db, email=email, purpose="signup", expiry_minutes=10)
-
     if existing:
         user = existing
         user.name = user_in.name.strip()
         user.password_hash = get_password_hash(user_in.password)
         user.role = role
-        user.is_active = False
-        user.reset_token = otp_code
-        user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
+        user.is_active = True
+        user.last_login = datetime.utcnow()
+        user.reset_token = None
+        user.reset_token_expiry = None
     else:
         user = User(
             name=user_in.name.strip(),
             email=email,
             password_hash=get_password_hash(user_in.password),
             role=role,
-            is_active=False,
-            last_login=None,
-            reset_token=otp_code,
-            reset_token_expiry=datetime.utcnow() + timedelta(minutes=10)
+            is_active=True,
+            last_login=datetime.utcnow(),
+            reset_token=None,
+            reset_token_expiry=None
         )
         db.add(user)
 
     db.commit()
     db.refresh(user)
 
-    # Dispatch Signup OTP email to the user's entered email address
-    background_tasks.add_task(send_signup_verification_code, user.email, otp_code, user.name)
-
     log_audit_event(
         db=db,
-        action="USER_SIGNUP_INITIATED",
+        action="USER_SIGNUP_DIRECT",
         module="Authentication",
-        description=f"Signup verification code sent to {user.email}",
+        description=f"New user {user.email} registered and activated directly.",
         user=user,
         record_id=str(user.id),
         request=request
     )
 
+    jwt_token = create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
+
     return {
+        "access_token": jwt_token,
+        "token_type": "bearer",
+        "user": user,
         "success": True,
-        "requires_verification": True,
+        "requires_verification": False,
         "email": user.email,
         "name": user.name,
-        "message": f"Verification code sent to {user.email}. Please check your email inbox to complete registration."
+        "message": "Account created successfully! Welcome to PredictIQ."
     }
 
 
@@ -288,21 +289,14 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
                     detail="Your account has been deactivated. Please contact your system administrator."
                 )
 
-            # If user has a pending verification code and has never completed onboarding
+            # If user has a pending verification code and has never completed onboarding, auto-activate
             if user.reset_token and not user.last_login:
-                otp_code = generate_and_save_otp(db=db, email=user.email, purpose="google_signup", expiry_minutes=10)
-                user.reset_token = otp_code
-                user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
+                user.is_active = True
+                user.last_login = datetime.utcnow()
+                user.reset_token = None
+                user.reset_token_expiry = None
                 db.commit()
-
-                background_tasks.add_task(send_google_verification_email, user.email, otp_code, user.name)
-                return {
-                    "success": True,
-                    "requires_verification": True,
-                    "email": user.email,
-                    "name": user.name,
-                    "message": f"A 6-digit verification code has been sent to your Gmail ({user.email}). Please enter it to complete signup."
-                }
+                db.refresh(user)
 
             if uid and not getattr(user, 'supabase_uid', None):
                 user.supabase_uid = uid
@@ -411,20 +405,14 @@ def login(payload: LoginRequest, request: Request, background_tasks: BackgroundT
             detail="Incorrect email or password"
         )
 
-    # Check if account is still unverified
+    # Auto-activate user if unverified
     if not getattr(user, 'is_active', True) and not user.last_login:
-        otp_code = generate_and_save_otp(db=db, email=user.email, purpose="signup", expiry_minutes=10)
-        user.reset_token = otp_code
-        user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=10)
+        user.is_active = True
+        user.last_login = datetime.utcnow()
+        user.reset_token = None
+        user.reset_token_expiry = None
         db.commit()
-        background_tasks.add_task(send_signup_verification_code, user.email, otp_code, user.name)
-        return {
-            "success": True,
-            "requires_verification": True,
-            "email": user.email,
-            "name": user.name,
-            "message": f"Your account requires email verification. A 6-digit code has been sent to {user.email}."
-        }
+        db.refresh(user)
 
     if not getattr(user, 'is_active', True):
         log_audit_event(
